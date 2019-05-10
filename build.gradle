@@ -1,0 +1,91 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.3.21'
+}
+
+group 'test'
+version '1.0-SNAPSHOT'
+
+apply from: file("${rootProject.projectDir}/ktlint.gradle")
+
+repositories {
+    maven { url = "https://soot-build.cs.upb.de/nexus/repository/soot-release/" }
+    maven { url = "https://soot-build.cs.upb.de/nexus/repository/soot-snapshot/" }
+    mavenLocal()
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+apply plugin: 'java'
+
+task sourcesJar(type: Jar, dependsOn: "classes") {
+    classifier = 'sources'
+    from sourceSets.main.allJava
+    from sourceSets.main.allSource
+    from sourceSets.test.allSource
+}
+
+apply plugin: 'maven'
+
+artifacts {
+    archives sourcesJar
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.12'
+    testImplementation "org.jetbrains.kotlin:kotlin-test"
+
+    compile 'org.slf4j:slf4j-api:1.7.25'
+    compile 'ch.qos.logback:logback-classic:1.2.3'
+    compile 'ch.qos.logback:logback-core:1.2.3'
+
+    compile group: 'org.apache.jena', name: 'jena', version: '3.7.0', ext: 'pom'
+    compile group: 'org.apache.jena', name: 'jena-arq', version: '3.7.0'
+    compile group: 'org.apache.jena', name: 'jena-core', version: '3.7.0'
+
+    compile group: 'org.jgrapht', name: 'jgrapht-core', version: '1.2.0'
+    compile group: 'jgrapht', name: 'jgrapht', version: '0.7.3'
+    compile group: 'jgraph', name: 'jgraph', version: '5.13.0.0'
+    compile 'org.apache.commons:commons-lang3:3.4'
+    compile group: 'edu.mit', name: 'jwi', version: '2.2.3'
+
+    // https://mvnrepository.com/artifact/edu.washington.cs.knowitall/morpha-stemmer
+    compile group: 'edu.washington.cs.knowitall', name: 'morpha-stemmer', version: '1.0.5'
+
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.0'
+
+    //compile 'org.droidmate:droidmate-2:+'
+    compile "com.github.uds-se.droidmate:droidmate-2:newExploreCommand-SNAPSHOT"
+    compile "com.github.uds-se:droidmate-coverage:master-SNAPSHOT"
+    compile "ca.mcgill.sable:soot:3.3.0-SNAPSHOT"
+    compile ("de.tud.sse:soot-infoflow-android:2.7.2-SNAPSHOT") {
+        // FlowDroid uses an older version of Soot, let's use the newest one!
+        exclude group: 'ca.mcgill.sable', module: 'soot'
+    }
+
+    implementation 'org.json:json:20160212'
+
+    // Stanford NLP
+    //compile 'edu.stanford.nlp:stanford-corenlp:3.9.1'
+    compile 'edu.stanford.nlp:stanford-parser:3.9.1'
+    compile 'com.hypertino:inflector_2.12:1.0.10'
+
+    compile group: 'xmlpull', name: 'xmlpull', version: '1.1.3.4d_b4_min'
+
+    // Wordnik API
+    //compile 'net.jeremybrooks:knicker:2.4.1'
+    
+    // https://mvnrepository.com/artifact/edu.washington.cs.knowitall/morpha-stemmer
+    compile 'edu.washington.cs.knowitall:morpha-stemmer:1.0.5'
+
+    // Graph
+    compile group: 'org.jgrapht', name: 'jgrapht-core', version: '1.3.0'
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
