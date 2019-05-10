@@ -30,6 +30,9 @@ artifacts {
     archives sourcesJar
 }
 
+apply plugin: 'application'
+mainClassName = "org.droidmate.saigen.Main"
+
 dependencies {
     testImplementation 'junit:junit:4.12'
     testImplementation "org.jetbrains.kotlin:kotlin-test"
