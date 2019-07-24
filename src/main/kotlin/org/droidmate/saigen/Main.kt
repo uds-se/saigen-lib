@@ -24,9 +24,9 @@ class Main {
                 // debug()
                 // System.exit(0)
                 val cfg = ConfigurationBuilder().build(args)
-                val builder = ExploreCommandBuilder.fromConfig(cfg)
+                // val builder = ExploreCommandBuilder.fromConfig(cfg)
 
-                ExplorationAPI.explore(cfg, builder)
+                // ExplorationAPI.explore(cfg, builder)
 
                 /** *
                  * To get the coverage, app should first be instrumented
@@ -52,7 +52,7 @@ class Main {
                     // Remove random and cannotExplore
                     .remove(StrategySelector.randomWidget)
                     // Add custom selector
-                    .append("CAM", camSelector, arrayOf(getCAMs()))
+                    // .append("CAM", camSelector, arrayOf(getCAMs()))
                     .append("SAIGEN", saigenSelector)
 
                 ExplorationAPI.explore(

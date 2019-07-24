@@ -10,6 +10,7 @@ import org.droidmate.explorationModel.ExplorationTrace
 import org.droidmate.explorationModel.interaction.Interaction
 import org.droidmate.explorationModel.interaction.State
 import org.droidmate.explorationModel.interaction.Widget
+import org.droidmate.saigen.storage.DictionaryProvider
 import org.droidmate.saigen.storage.LinkProvider
 import org.droidmate.saigen.storage.QueryResult
 import org.droidmate.saigen.storage.Storage
@@ -29,7 +30,9 @@ class SaigenMF : ModelFeature() {
 
     override val coroutineContext: CoroutineContext = CoroutineName("SaigenMF") + Job()
 
-    private val storage = Storage(sortedSetOf(LinkProvider()))
+    // private val storage = Storage(sortedSetOf(LinkProvider()))
+    private val storage = Storage(sortedSetOf(LinkProvider(), DictionaryProvider(mapOf("user" to listOf("Johnny1999", "Emmmma95"), "password" to listOf("sec", "rets"), "url" to listOf("http://google.com")))))
+
 
     /**
      * Initialized on the onAppExplorationStarted
@@ -59,10 +62,16 @@ class SaigenMF : ModelFeature() {
     private fun Widget.isFilled(): Boolean {
         assert(this.isVisibleDataWidget()) { "Widget $this should have been a data widget" }
 
+        log.debug("MARKER InsertedTextValues: " + trace.insertedTextValues())
+
+        if (this.isPassword && this.text.isNotBlank() && this.text != this.hintText) { // password fields can't be tested for equality, as the input text looks like "***"
+            return true
+        }
+
         return this.text.isNotBlank() && // has text
                 trace.insertedTextValues()
                     .map { it.replace(";", "<semicolon>").replace(Regex("\\r\\n|\\r|\\n"), "<newline>").trim() }
-                    .any { it == this.text } // the text has been inserted
+                    .any { it == this.text.removeSuffix("<newline>") } // removes trailing <newline> if it was added by setText with sendEnter=true
     }
 
     private fun Widget.notFilled(): Boolean {
