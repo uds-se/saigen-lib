@@ -3,12 +3,18 @@ package org.droidmate.saigen
 import kotlinx.coroutines.runBlocking
 import org.droidmate.api.ExplorationAPI
 import org.droidmate.command.ExploreCommandBuilder
+import org.droidmate.configuration.ConfigProperties
 import org.droidmate.configuration.ConfigurationBuilder
+import org.droidmate.configuration.ConfigurationWrapper
 import org.droidmate.exploration.SelectorFunction
 import org.droidmate.exploration.StrategySelector
+import org.droidmate.legacy.writeText
 import org.droidmate.saigen.storage.DictionaryProvider
 import org.droidmate.saigen.storage.LinkProvider
 import org.droidmate.saigen.storage.Storage
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
 
 /**
  * Example run config:
@@ -24,6 +30,7 @@ class Main {
                 // debug()
                 // System.exit(0)
                 val cfg = ConfigurationBuilder().build(args)
+
                 // val builder = ExploreCommandBuilder.fromConfig(cfg)
 
                 // ExplorationAPI.explore(cfg, builder)
@@ -60,7 +67,22 @@ class Main {
                     commandBuilder = commandBuilder,
                     watcher = emptyList()
                 )
+
+                writeStatisticsToFile(cfg)
             }
+        }
+
+        private fun writeStatisticsToFile(cfg:ConfigurationWrapper) {
+            println("Writing statistics to file")
+
+            val statisticsDir = Paths.get(cfg[ConfigProperties.Output.outputDir].path).toAbsolutePath().resolve("statistics").toAbsolutePath()
+            if (!Files.exists(statisticsDir))
+                Files.createDirectories(statisticsDir)
+            val statisticsFile = statisticsDir.resolve("stats.txt")
+            Files.write(statisticsFile, ("#unique input fields found: " + SaigenMF.uidMap.size + "\n").toByteArray())
+            Files.write(statisticsFile, ("#unique selected input fields: " + SaigenMF.uidMap.filterValues { it.first==true  }.size + "\n").toByteArray(), StandardOpenOption.APPEND)
+            Files.write(statisticsFile, ("#unique input fields filled automatically: " + SaigenMF.uidMap.filterValues { it.second==true  }.size + "\n").toByteArray(), StandardOpenOption.APPEND)
+
         }
 
         private fun getCAMs(): List<CAM> {

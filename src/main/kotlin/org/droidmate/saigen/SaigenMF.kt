@@ -26,6 +26,8 @@ class SaigenMF : ModelFeature() {
     companion object {
         @JvmStatic
         private val log: Logger by lazy { LoggerFactory.getLogger(this::class.java) }
+
+        val uidMap = mutableMapOf<UUID, Pair<Boolean, Boolean>>()
     }
 
     override val coroutineContext: CoroutineContext = CoroutineName("SaigenMF") + Job()
@@ -115,6 +117,15 @@ class SaigenMF : ModelFeature() {
 
         log.debug("Blacklisting unused labels: ${unusedLabels.joinToString(",")}")
         blacklistedWords.addAll(unusedLabels)
+
+        // Here: build set of all unique widgets seen so far
+        for (dw in dataWidgets) {
+            if (!uidMap.containsKey(dw.uid)) {
+                log.debug("[XXX]adding new uid")
+                uidMap[dw.uid] = Pair(false, false)
+            }
+        }
+        log.debug("uidMap[" + uidMap.size + "]: " + uidMap.toString())
 
         val toFill = dataWidgets
             .filter { it.notFilled() }

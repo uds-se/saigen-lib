@@ -17,13 +17,12 @@ class SaigenRandom(randomSeed: Long) : RandomWidget(randomSeed, true, true, empt
             super.chooseRandomWidget()
             // Fill values
         } else {
-            // val nrEntries = widgetsToFill.values.first().size
-            // val idx = random.nextInt(nrEntries)
-
-            logger.info("Entering text: ${widgetsToFill.map { it.value[random.nextInt(it.value.size)] }}") //idx
-
             eContext.queue(widgetsToFill.map {
-                it.key.setText(it.value[random.nextInt(it.value.size)])
+                SaigenMF.uidMap[it.key.uid] = Pair(true, true) // widget was selected and is now being filled
+
+                val toEnter = it.value[random.nextInt(it.value.size)]
+                logger.info("Entering text: " + toEnter)
+                it.key.setText(toEnter)
             })
         }
     }
