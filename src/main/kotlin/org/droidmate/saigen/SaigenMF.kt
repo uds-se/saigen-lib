@@ -1,11 +1,10 @@
 package org.droidmate.saigen
 
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
+import org.droidmate.deviceInterface.exploration.Rectangle
 import org.droidmate.exploration.ExplorationContext
 import org.droidmate.exploration.modelFeatures.ModelFeature
+import org.droidmate.exploration.modelFeatures.reporter.drawRectangle
 import org.droidmate.explorationModel.ExplorationTrace
 import org.droidmate.explorationModel.interaction.Interaction
 import org.droidmate.explorationModel.interaction.State
@@ -19,8 +18,17 @@ import org.droidmate.saigen.utils.getSynonyms
 import org.droidmate.saigen.utils.isVisibleDataWidget
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.nio.file.Files
 import java.util.UUID
 import kotlin.coroutines.CoroutineContext
+import javax.imageio.ImageIO
+import java.awt.BasicStroke
+import java.awt.Color
+import java.awt.Graphics2D
+import java.io.File
+import java.io.IOException
+import java.nio.file.StandardOpenOption
+
 
 class SaigenMF : ModelFeature() {
     companion object {
@@ -28,6 +36,10 @@ class SaigenMF : ModelFeature() {
         private val log: Logger by lazy { LoggerFactory.getLogger(this::class.java) }
 
         val uidMap = mutableMapOf<UUID, Pair<Boolean, Boolean>>()
+        val queryMap = mutableMapOf<Pair<UUID, String>, List<String>>() // key: <queryID, label>, values: from DBPedia...
+        val allQueriedLabels = mutableSetOf<String>()
+
+        lateinit var context: ExplorationContext
     }
 
     override val coroutineContext: CoroutineContext = CoroutineName("SaigenMF") + Job()
@@ -40,6 +52,7 @@ class SaigenMF : ModelFeature() {
      * Initialized on the onAppExplorationStarted
      */
     private lateinit var trace: ExplorationTrace
+
 
     /**
      * Labels for which no query is found
@@ -83,6 +96,7 @@ class SaigenMF : ModelFeature() {
 
     override fun onAppExplorationStarted(context: ExplorationContext) {
         this.trace = context.explorationTrace
+        SaigenMF.context = context
     }
 
     private suspend fun getLastQueryData(): List<QueryResult> {
@@ -90,6 +104,12 @@ class SaigenMF : ModelFeature() {
 
         queriedData.forEach { result ->
             log.trace("GroupId: ${result.queryId}\tLabel: ${result.label}\tValues: ${result.values.joinToString(" | ")}")
+            log.debug("GroupId: ${result.queryId}\tLabel: ${result.label}\tValues: ${result.values.joinToString(" | ")}")
+
+            if (!queryMap.containsKey(Pair(result.queryId, result.label))) {
+                log.debug("[yyy adding new query] for label " + result.label)
+                queryMap[Pair(result.queryId, result.label)] = result.values
+            }
         }
 
         return queriedData
@@ -121,11 +141,11 @@ class SaigenMF : ModelFeature() {
         // Here: build set of all unique widgets seen so far
         for (dw in dataWidgets) {
             if (!uidMap.containsKey(dw.uid)) {
-                log.debug("[XXX]adding new uid")
+                // log.debug("[XXX]adding new uid")
                 uidMap[dw.uid] = Pair(false, false)
             }
         }
-        log.debug("uidMap[" + uidMap.size + "]: " + uidMap.toString())
+        //log.debug("uidMap[" + uidMap.size + "]: " + uidMap.toString())
 
         val toFill = dataWidgets
             .filter { it.notFilled() }
@@ -136,12 +156,64 @@ class SaigenMF : ModelFeature() {
         return toFill
     }
 
+    //For randomly filled widgets, interactions does not contain "ActionQueue-START", "ActionQueue-End", so the image will be named after the TextInsert action. If, however, we find an "ActionQueue-START", then the image file will have the name of that action.
+    suspend fun drawOnScreenshots(interactions: List<Interaction>) {
+        var rects: MutableList<Rectangle> = mutableListOf<Rectangle>()
+        var actionId = -1
+
+        assert(interactions.isNotEmpty())
+
+        if (interactions[0].actionType == "ActionQueue-START") {
+            actionId = interactions[0].actionId
+        }
+
+        for (interaction in interactions) {
+            if (interaction.actionType == "TextInsert") {
+                if (actionId == -1) {
+                    actionId = interaction.actionId
+                }
+                rects.add(interaction.targetWidget!!.visibleBounds)
+            }
+        }
+
+        if (rects.size > 0) {
+            val targetDir = SaigenMF.context.model.config.imgDst
+            val fileName = "$actionId.jpg"
+            val dstFile = targetDir.resolve(fileName)
+            while (!Files.exists(dstFile) || !Files.isReadable(dstFile)) {
+                delay(100L)
+            }
+
+            //delay(2000) // problem: sometimes file exists, but has not been written yet?... race condition // possibly not required anymore after adding isReadable() check
+
+            // Now open for editing, draw rectangle around all recently filled edit boxes
+            val myPicture = ImageIO.read(dstFile.toFile())
+            val g = myPicture.graphics as Graphics2D
+            g.stroke = BasicStroke(10f)
+            g.color = Color.BLUE
+            for (rect in rects) {
+                g.drawRectangle(rect)
+            }
+            try {
+                if (ImageIO.write(myPicture, "jpg", File(dstFile.toString()))) {
+                    log.debug("-- saved")
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+
+
+        }
+    }
+
     override suspend fun onNewAction(
         traceId: UUID,
         interactions: List<Interaction>,
         prevState: State,
         newState: State
     ) {
+        async { drawOnScreenshots(interactions) }
+
         val matchedWidgets = LabelMatcher.getLabels(newState)
 
         if (matchedWidgets.isEmpty())
@@ -156,6 +228,9 @@ class SaigenMF : ModelFeature() {
             .map { it.value }
             .distinct()
         log.trace("Requested terms: ${nouns.joinToString()}")
+
+
+        nouns.map { allQueriedLabels.add(it) }
 
         // Populate the cache while dm processes
         this.lastQuery = async { storage.query(nouns) }

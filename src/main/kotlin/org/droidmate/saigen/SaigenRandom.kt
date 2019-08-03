@@ -1,9 +1,12 @@
 package org.droidmate.saigen
 
 import org.droidmate.deviceInterface.exploration.ExplorationAction
+import org.droidmate.deviceInterface.exploration.Swipe
+import org.droidmate.exploration.actions.availableActions
 import org.droidmate.exploration.actions.queue
 import org.droidmate.exploration.actions.setText
 import org.droidmate.exploration.strategy.widget.RandomWidget
+import org.droidmate.explorationModel.debugOutput
 import org.droidmate.explorationModel.interaction.Widget
 
 class SaigenRandom(randomSeed: Long) : RandomWidget(randomSeed, true, true, emptyList()) {
