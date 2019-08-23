@@ -21,7 +21,7 @@ class SaigenRandom(randomSeed: Long) : RandomWidget(randomSeed, true, true, empt
             // Fill values
         } else {
             eContext.queue(widgetsToFill.map {
-                SaigenMF.uidMap[it.key.uid] = Pair(true, true) // widget was selected and is now being filled
+                SaigenMF.concreteIDMap[it.key.id] = 1 // widget was selected and is now being filled
 
                 val toEnter = it.value[random.nextInt(it.value.size)]
                 logger.info("Entering text: " + toEnter)
@@ -31,8 +31,8 @@ class SaigenRandom(randomSeed: Long) : RandomWidget(randomSeed, true, true, empt
     }
 
     override suspend fun computeCandidates(): Collection<Widget> {
-        return super.computeCandidates()
-            .filterNot { it.isPassword && it.text.isNotBlank() && it.text != it.hintText } // password fields can't be tested for equality, as the input text looks like "***"
+        return super.computeCandidates() // TODO: input fields, which are initiallity filled with text, are candidates if their text==initialText
+            .filterNot { it.isPassword && it.text.isNotBlank() && it.text != it.hintText} // password fields can't be tested for equality, as the input text looks like "***"
             .filterNot { eContext.explorationTrace.insertedTextValues().contains(it.text.removeSuffix("<newline>")) } // removes trailing <newline> if it was added by setText with sendEnter=true
     }
 }

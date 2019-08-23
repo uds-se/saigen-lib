@@ -5,6 +5,7 @@ import org.droidmate.deviceInterface.exploration.Rectangle
 import org.droidmate.exploration.ExplorationContext
 import org.droidmate.exploration.modelFeatures.ModelFeature
 import org.droidmate.exploration.modelFeatures.reporter.drawRectangle
+import org.droidmate.explorationModel.ConcreteId
 import org.droidmate.explorationModel.ExplorationTrace
 import org.droidmate.explorationModel.interaction.Interaction
 import org.droidmate.explorationModel.interaction.State
@@ -27,7 +28,6 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.io.File
 import java.io.IOException
-import java.nio.file.StandardOpenOption
 
 
 class SaigenMF : ModelFeature() {
@@ -35,7 +35,7 @@ class SaigenMF : ModelFeature() {
         @JvmStatic
         private val log: Logger by lazy { LoggerFactory.getLogger(this::class.java) }
 
-        val uidMap = mutableMapOf<UUID, Pair<Boolean, Boolean>>()
+        val concreteIDMap = mutableMapOf<ConcreteId, Int>() // Int param: 0 -> widget found, but not touched yet. 1 -> widget was filled by DBPedia, DictionaryProvider... 2 -> not yet implemeneted, but in future: widgets was filled with random input (requires DM2 change)
         val queryMap = mutableMapOf<Pair<UUID, String>, List<String>>() // key: <queryID, label>, values: from DBPedia...
         val allQueriedLabels = mutableSetOf<String>()
 
@@ -140,12 +140,10 @@ class SaigenMF : ModelFeature() {
 
         // Here: build set of all unique widgets seen so far
         for (dw in dataWidgets) {
-            if (!uidMap.containsKey(dw.uid)) {
-                // log.debug("[XXX]adding new uid")
-                uidMap[dw.uid] = Pair(false, false)
+            if (!concreteIDMap.containsKey(dw.id)) {
+                concreteIDMap[dw.id] = 0
             }
         }
-        //log.debug("uidMap[" + uidMap.size + "]: " + uidMap.toString())
 
         val toFill = dataWidgets
             .filter { it.notFilled() }

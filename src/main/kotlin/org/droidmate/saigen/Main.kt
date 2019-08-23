@@ -15,6 +15,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
+import java.util.*
 
 /**
  * Example run config:
@@ -84,8 +85,17 @@ class Main {
             Files.deleteIfExists(statisticsFile)
             Files.createFile(statisticsFile)
 
-            Files.write(statisticsFile, ("#unique input fields found: " + SaigenMF.uidMap.size + "\n").toByteArray(), StandardOpenOption.APPEND)
-            Files.write(statisticsFile, ("#unique input fields filled automatically (DBPedia, DictionaryProvider): " + SaigenMF.uidMap.filterValues { it.second==true  }.size + "\n").toByteArray(), StandardOpenOption.APPEND)
+            var uniqueWidgets = mutableMapOf<UUID, Int>()
+            SaigenMF.concreteIDMap.forEach { (key, value) ->
+                if (!uniqueWidgets.containsKey(key.uid) || value != 0)
+                    uniqueWidgets[key.uid] = value
+            }
+
+            Files.write(statisticsFile, ("#total input fields found: " + SaigenMF.concreteIDMap.size + "\n").toByteArray(), StandardOpenOption.APPEND)
+            Files.write(statisticsFile, ("#total input fields filled automatically (DBPedia, DictionaryProvider): " + SaigenMF.concreteIDMap.filterValues { it==1  }.size + "\n").toByteArray(), StandardOpenOption.APPEND)
+
+            Files.write(statisticsFile, ("#unique input fields found: " + uniqueWidgets.size + "\n").toByteArray(), StandardOpenOption.APPEND)
+            Files.write(statisticsFile, ("#unique input fields filled automatically (DBPedia, DictionaryProvider): " + uniqueWidgets.filterValues { it==1  }.size + "\n").toByteArray(), StandardOpenOption.APPEND)
             //Files.write(statisticsFile, ("#unique input fields selected (fields that were filled by any method): " + SaigenMF.uidMap.filterValues { it.first==true  }.size + "\n").toByteArray(), StandardOpenOption.APPEND)
             // Files.write(statisticsFile, ("#unique input fields filled via DictProviders: ").toByteArray(), StandardOpenOption.APPEND)
             // Files.write(statisticsFile, ("#unique input fields filled randomly").toByteArray(), StandardOpenOption.APPEND)
