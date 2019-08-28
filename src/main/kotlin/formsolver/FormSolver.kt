@@ -38,10 +38,11 @@ class FormSolver(
         evaluator.setEndTimeStep1(step2)
         logger.debug("Generation of associations is over")
 
-        val genRel = RelationshipGenerator(this.graph, this.elements, this.elementsLv2)
-        genRel.analyseCorrelations()
-        evaluator.addNQuery(genRel.nQuery)
-        this.graph = genRel.graph
+        // The commented code below matches input fields semantically in activities. So if we have a "city" and a "car" input, it will try to find a city that is somewhat related to a car and get very few, clumsy results. In my test subject, it works better to query separately.
+        // val genRel = RelationshipGenerator(this.graph, this.elements, this.elementsLv2)
+        // genRel.analyseCorrelations()
+        // evaluator.addNQuery(genRel.nQuery)
+        // this.graph = genRel.graph
 
         val step3 = System.currentTimeMillis()
         evaluator.setEndTimeStep2(step3)

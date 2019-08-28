@@ -25,8 +25,8 @@ class QueryExecutor internal constructor(
     private lateinit var updatedGraph: Graph
 
     internal fun runFinalQuery(maxEntries: Int) {
-        CommonData.queryToValuesMap.clear()
-        CommonData.outputQueries = emptyList<String>().toMutableList()
+        CommonData.queryToValuesMap.clear() // might want to comment these two lines when using RelationshipGenerator in FormSolver.kt.
+        CommonData.outputQueries = emptyList<String>().toMutableList() //
         val analyser = GraphAnalyser(this.graph)
         analyser.splitConnectedComponents()
         analyser.setElements(this.elements)
@@ -89,7 +89,7 @@ class QueryExecutor internal constructor(
                     logger.debug("Valid model  the support is " + obtainedResults[i - 1])
                 }
                 --this.numComponents
-                this.resolveGraph(g, maxEntries)
+                this.resolveGraph(g, maxEntries) // recursive call
                 continue
             }
             this.validForest.add(tmp_g)

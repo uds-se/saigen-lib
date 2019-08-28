@@ -82,7 +82,7 @@ object WordNet {
                         }
                     }
                     if (dict.getSenseEntry(w.senseKey).senseNumber < senseNumber) {
-                        synonyms.removeAll(synonyms)
+                        // synonyms.removeAll(synonyms) // Dunno why this line is here. It introduces a bug: Not all synonyms from WordNet are used. http://wordnetweb.princeton.edu/perl/webwn?s=flora&sub=Search+WordNet&o2=&o0=1&o8=1&o1=1&o7=&o5=&o9=&o6=&o3=&o4=&h= . "plant" is missing when we include this line.
                         if (!allSynonyms.contains(syn)) {
                             synonyms.add(syn)
                         }

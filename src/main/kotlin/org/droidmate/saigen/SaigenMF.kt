@@ -182,7 +182,7 @@ class SaigenMF : ModelFeature() {
                 delay(100L)
             }
 
-            //delay(2000) // problem: sometimes file exists, but has not been written yet?... race condition // possibly not required anymore after adding isReadable() check
+            delay(2000) // problem: sometimes file exists, but has not been written yet?... race condition
 
             // Now open for editing, draw rectangle around all recently filled edit boxes
             val myPicture = ImageIO.read(dstFile.toFile())
