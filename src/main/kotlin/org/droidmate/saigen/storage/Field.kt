@@ -15,7 +15,7 @@ data class Field(
             .substringBefore(",") // prevent: Bardonia, New York | Alexandria, Indiana
             .trim()
 
-    private val queriedName by lazy { linkFieldName.substringAfter("_") }
+    private val queriedName by lazy { linkFieldName.substringAfter("_").toLowerCase() } // toLowerCase() required because for classAssociations, it's capitalized
 
     val identifiers by lazy { queriedName.getSynonyms() }
 

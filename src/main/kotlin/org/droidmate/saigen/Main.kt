@@ -3,12 +3,19 @@ package org.droidmate.saigen
 import kotlinx.coroutines.runBlocking
 import org.droidmate.api.ExplorationAPI
 import org.droidmate.command.ExploreCommandBuilder
+import org.droidmate.configuration.ConfigProperties
 import org.droidmate.configuration.ConfigurationBuilder
+import org.droidmate.configuration.ConfigurationWrapper
 import org.droidmate.exploration.SelectorFunction
 import org.droidmate.exploration.StrategySelector
 import org.droidmate.saigen.storage.DictionaryProvider
 import org.droidmate.saigen.storage.LinkProvider
 import org.droidmate.saigen.storage.Storage
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
+import java.util.*
 
 /**
  * Example run config:
@@ -24,9 +31,9 @@ class Main {
                 // debug()
                 // System.exit(0)
                 val cfg = ConfigurationBuilder().build(args)
-                val builder = ExploreCommandBuilder.fromConfig(cfg)
+                // val builder = ExploreCommandBuilder.fromConfig(cfg)
 
-                ExplorationAPI.explore(cfg, builder)
+                // ExplorationAPI.explore(cfg, builder)
 
                 /** *
                  * To get the coverage, app should first be instrumented
@@ -52,7 +59,7 @@ class Main {
                     // Remove random and cannotExplore
                     .remove(StrategySelector.randomWidget)
                     // Add custom selector
-                    .append("CAM", camSelector, arrayOf(getCAMs()))
+                    // .append("CAM", camSelector, arrayOf(getCAMs()))
                     .append("SAIGEN", saigenSelector)
 
                 ExplorationAPI.explore(
@@ -60,7 +67,55 @@ class Main {
                     commandBuilder = commandBuilder,
                     watcher = emptyList()
                 )
+
+                writeStatisticsToFile(cfg)
             }
+        }
+
+        // This method must be executed after SaigenMF.context was initialized. Kinda hacky but a good way to get baseDir.
+        private fun writeStatisticsToFile(cfg:ConfigurationWrapper) {
+            println("Writing stats.txt")
+
+            val baseDir = SaigenMF.context.model.config.baseDir
+            //val statisticsDir = Paths.get(cfg[ConfigProperties.Output.outputDir].path).toAbsolutePath().resolve("statistics").toAbsolutePath()
+            val statisticsDir = baseDir.toAbsolutePath().resolve("statistics").toAbsolutePath()
+            if (!Files.exists(statisticsDir))
+                Files.createDirectories(statisticsDir)
+            val statisticsFile = statisticsDir.resolve("stats.txt")
+            Files.deleteIfExists(statisticsFile)
+            Files.createFile(statisticsFile)
+
+            var uniqueWidgets = mutableMapOf<UUID, Int>()
+            SaigenMF.concreteIDMap.forEach { (key, value) ->
+                if (!uniqueWidgets.containsKey(key.uid) || value != 0)
+                    uniqueWidgets[key.uid] = value
+            }
+
+            Files.write(statisticsFile, ("#total input fields found: " + SaigenMF.concreteIDMap.size + "\n").toByteArray(), StandardOpenOption.APPEND)
+            Files.write(statisticsFile, ("#total input fields filled automatically (DBPedia, DictionaryProvider): " + SaigenMF.concreteIDMap.filterValues { it==1  }.size + "\n").toByteArray(), StandardOpenOption.APPEND)
+
+            Files.write(statisticsFile, ("#unique input fields found: " + uniqueWidgets.size + "\n").toByteArray(), StandardOpenOption.APPEND)
+            Files.write(statisticsFile, ("#unique input fields filled automatically (DBPedia, DictionaryProvider): " + uniqueWidgets.filterValues { it==1  }.size + "\n").toByteArray(), StandardOpenOption.APPEND)
+            //Files.write(statisticsFile, ("#unique input fields selected (fields that were filled by any method): " + SaigenMF.uidMap.filterValues { it.first==true  }.size + "\n").toByteArray(), StandardOpenOption.APPEND)
+            // Files.write(statisticsFile, ("#unique input fields filled via DictProviders: ").toByteArray(), StandardOpenOption.APPEND)
+            // Files.write(statisticsFile, ("#unique input fields filled randomly").toByteArray(), StandardOpenOption.APPEND)
+
+
+            println("Writing querydebug.txt")
+            val queryDebugFile = statisticsDir.resolve("querydebug.txt")
+            Files.deleteIfExists(queryDebugFile)
+            Files.createFile(queryDebugFile)
+
+            Files.write(queryDebugFile, "Query debug information:\n".toByteArray(), StandardOpenOption.APPEND)
+            SaigenMF.queryMap.forEach{ q ->
+                Files.write(queryDebugFile, (q.key.second + " = {" + q.value.joinToString(",") + "}\n").toByteArray(), StandardOpenOption.APPEND)
+
+                if (q.key.second in SaigenMF.allQueriedLabels) {
+                    SaigenMF.allQueriedLabels.remove(q.key.second)
+                }
+            }
+
+            Files.write(queryDebugFile, ("Labels for which we could not get any results: " + SaigenMF.allQueriedLabels + "\n").toByteArray(), StandardOpenOption.APPEND)
         }
 
         private fun getCAMs(): List<CAM> {

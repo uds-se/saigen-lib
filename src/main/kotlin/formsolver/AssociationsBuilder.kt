@@ -29,6 +29,7 @@ internal class AssociationsBuilder(
 
     private fun <T> runQuery(queryStr: String, processResult: (ResultSet?) -> T): T {
         try {
+            logger.debug("Running query: " + queryStr)
             val query = QueryFactory.create(queryStr)
             QueryExecutionFactory.sparqlService(FormSolver.endpoint, query).use { qExec ->
                 val queryResult: ResultSet? = try {
@@ -56,13 +57,13 @@ internal class AssociationsBuilder(
         while (x < synonyms.size) {
             val queryTag = Utility.initialToLowerCase(synonyms[x])
             val queryString =
-                CommonData.prefix + "SELECT *" + "WHERE { ?nodo1 " + namespace2 + queryTag + " " + "?nodo2 . }" + "LIMIT 1" // 1000" Nataniel
+                CommonData.prefix + "SELECT * WHERE { ?node1 " + namespace2 + queryTag + " " + "?node2 . }" + "LIMIT 1" // 1000" Nataniel
 
             val quantity = runQuery(queryString) { result ->
                 if (result?.hasNext() == true) {
                     val quantity = this.getQuantity(namespace2, queryTag, true)
                     val sqs = result.next()
-                    val obj = sqs.get("nodo2")
+                    val obj = sqs.get("node2")
                     this.node = obj
 
                     quantity
@@ -94,9 +95,9 @@ internal class AssociationsBuilder(
 
         var x = 0
         while (x < synonyms.size) {
-            val queryTag = Utility.initialToLowerCase(synonyms[x])
+            val queryTag = Utility.initialToLowerCase(synonyms[x]) // in my experience, if this is lower case, we often get no results. For predicateAssociations, it should be lower case though.
             val queryString =
-                CommonData.prefix + "SELECT ?nodo1 " + "WHERE { ?" + queryTag + " a " + namespace2 + queryTag + "}" + "LIMIT 1" // 1000" Nataniel
+                CommonData.prefix + "SELECT ?$queryTag " + "WHERE { ?$queryTag a " + namespace2 + queryTag.capitalize() + "}" + "LIMIT 1" // 1000" Nataniel
 
             val quantity = runQuery(queryString) { result ->
                 if (result?.hasNext() == true) {
@@ -155,7 +156,7 @@ internal class AssociationsBuilder(
     }
 
     private fun getQuantity(namespace2: String, tag: String, predicate: Boolean): Int {
-        val triple = if (predicate) "?nodo1 $namespace2$tag ?nodo2 ." else "?$tag a $namespace2$tag"
+        val triple = if (predicate) "?node1 $namespace2$tag ?node2 ." else "?$tag a $namespace2${tag.capitalize()}"
 
         val cachedResult = namespaceTagCache[triple]
         if (cachedResult != null) {
@@ -176,7 +177,7 @@ internal class AssociationsBuilder(
         }
 
         namespaceTagCache[triple] = quantity
-        logger.debug("We found $quantity for the ${if (predicate) "predicate" else "class"} predicate $namespace2$tag")
+        logger.debug("We found $quantity for the ${if (predicate) "predicate" else "class"} association $namespace2${tag.capitalize()}")
         return quantity
     }
 
@@ -241,7 +242,7 @@ internal class AssociationsBuilder(
                         e3.printStackTrace()
                     }
 
-                    logger.debug("Class creation for" + this.tags[i])
+                    logger.debug("Class creation for " + this.tags[i])
                     this.createClassAssociation(this.namespace[maxClassIndex], this.tags[i], maxClass.toInt())
                 }
                 ++i
