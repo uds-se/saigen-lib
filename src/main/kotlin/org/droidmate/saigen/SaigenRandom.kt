@@ -1,12 +1,9 @@
 package org.droidmate.saigen
 
 import org.droidmate.deviceInterface.exploration.ExplorationAction
-import org.droidmate.deviceInterface.exploration.Swipe
-import org.droidmate.exploration.actions.availableActions
 import org.droidmate.exploration.actions.queue
 import org.droidmate.exploration.actions.setText
 import org.droidmate.exploration.strategy.widget.RandomWidget
-import org.droidmate.explorationModel.debugOutput
 import org.droidmate.explorationModel.interaction.Widget
 
 class SaigenRandom(randomSeed: Long) : RandomWidget(randomSeed, true, true, emptyList()) {
@@ -31,8 +28,11 @@ class SaigenRandom(randomSeed: Long) : RandomWidget(randomSeed, true, true, empt
     }
 
     override suspend fun computeCandidates(): Collection<Widget> {
-        return super.computeCandidates() // TODO: input fields, which are initiallity filled with text, are candidates if their text==initialText
-            .filterNot { it.isPassword && it.text.isNotBlank() && it.text != it.hintText} // password fields can't be tested for equality, as the input text looks like "***"
-            .filterNot { eContext.explorationTrace.insertedTextValues().contains(it.text.removeSuffix("<newline>")) } // removes trailing <newline> if it was added by setText with sendEnter=true
+        // TODO: input fields, which are initiallity filled with text, are candidates if their text==initialText
+        return super.computeCandidates()
+            // password fields can't be tested for equality, as the input text looks like "***"
+            .filterNot { it.isPassword && it.text.isNotBlank() && it.text != it.hintText }
+            // removes trailing <newline> if it was added by setText with sendEnter=true
+            .filterNot { eContext.explorationTrace.insertedTextValues().contains(it.text.removeSuffix("<newline>")) }
     }
 }

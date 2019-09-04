@@ -3,7 +3,6 @@ package org.droidmate.saigen
 import kotlinx.coroutines.runBlocking
 import org.droidmate.api.ExplorationAPI
 import org.droidmate.command.ExploreCommandBuilder
-import org.droidmate.configuration.ConfigProperties
 import org.droidmate.configuration.ConfigurationBuilder
 import org.droidmate.configuration.ConfigurationWrapper
 import org.droidmate.exploration.SelectorFunction
@@ -12,10 +11,8 @@ import org.droidmate.saigen.storage.DictionaryProvider
 import org.droidmate.saigen.storage.LinkProvider
 import org.droidmate.saigen.storage.Storage
 import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
-import java.util.*
+import java.util.UUID
 
 /**
  * Example run config:
@@ -73,11 +70,11 @@ class Main {
         }
 
         // This method must be executed after SaigenMF.context was initialized. Kinda hacky but a good way to get baseDir.
-        private fun writeStatisticsToFile(cfg:ConfigurationWrapper) {
+        private fun writeStatisticsToFile(cfg: ConfigurationWrapper) {
             println("Writing stats.txt")
 
             val baseDir = SaigenMF.context.model.config.baseDir
-            //val statisticsDir = Paths.get(cfg[ConfigProperties.Output.outputDir].path).toAbsolutePath().resolve("statistics").toAbsolutePath()
+            // val statisticsDir = Paths.get(cfg[ConfigProperties.Output.outputDir].path).toAbsolutePath().resolve("statistics").toAbsolutePath()
             val statisticsDir = baseDir.toAbsolutePath().resolve("statistics").toAbsolutePath()
             if (!Files.exists(statisticsDir))
                 Files.createDirectories(statisticsDir)
@@ -91,15 +88,30 @@ class Main {
                     uniqueWidgets[key.uid] = value
             }
 
-            Files.write(statisticsFile, ("#total input fields found: " + SaigenMF.concreteIDMap.size + "\n").toByteArray(), StandardOpenOption.APPEND)
-            Files.write(statisticsFile, ("#total input fields filled automatically (DBPedia, DictionaryProvider): " + SaigenMF.concreteIDMap.filterValues { it==1  }.size + "\n").toByteArray(), StandardOpenOption.APPEND)
+            Files.write(
+                statisticsFile,
+                ("#total input fields found: " + SaigenMF.concreteIDMap.size + "\n").toByteArray(),
+                StandardOpenOption.APPEND
+            )
+            Files.write(
+                statisticsFile,
+                ("#total input fields filled automatically (DBPedia, DictionaryProvider): " + SaigenMF.concreteIDMap.filterValues { it == 1 }.size + "\n").toByteArray(),
+                StandardOpenOption.APPEND
+            )
 
-            Files.write(statisticsFile, ("#unique input fields found: " + uniqueWidgets.size + "\n").toByteArray(), StandardOpenOption.APPEND)
-            Files.write(statisticsFile, ("#unique input fields filled automatically (DBPedia, DictionaryProvider): " + uniqueWidgets.filterValues { it==1  }.size + "\n").toByteArray(), StandardOpenOption.APPEND)
-            //Files.write(statisticsFile, ("#unique input fields selected (fields that were filled by any method): " + SaigenMF.uidMap.filterValues { it.first==true  }.size + "\n").toByteArray(), StandardOpenOption.APPEND)
+            Files.write(
+                statisticsFile,
+                ("#unique input fields found: " + uniqueWidgets.size + "\n").toByteArray(),
+                StandardOpenOption.APPEND
+            )
+            Files.write(
+                statisticsFile,
+                ("#unique input fields filled automatically (DBPedia, DictionaryProvider): " + uniqueWidgets.filterValues { it == 1 }.size + "\n").toByteArray(),
+                StandardOpenOption.APPEND
+            )
+            // Files.write(statisticsFile, ("#unique input fields selected (fields that were filled by any method): " + SaigenMF.uidMap.filterValues { it.first==true  }.size + "\n").toByteArray(), StandardOpenOption.APPEND)
             // Files.write(statisticsFile, ("#unique input fields filled via DictProviders: ").toByteArray(), StandardOpenOption.APPEND)
             // Files.write(statisticsFile, ("#unique input fields filled randomly").toByteArray(), StandardOpenOption.APPEND)
-
 
             println("Writing querydebug.txt")
             val queryDebugFile = statisticsDir.resolve("querydebug.txt")
@@ -107,15 +119,23 @@ class Main {
             Files.createFile(queryDebugFile)
 
             Files.write(queryDebugFile, "Query debug information:\n".toByteArray(), StandardOpenOption.APPEND)
-            SaigenMF.queryMap.forEach{ q ->
-                Files.write(queryDebugFile, (q.key.second + " = {" + q.value.joinToString(",") + "}\n").toByteArray(), StandardOpenOption.APPEND)
+            SaigenMF.queryMap.forEach { q ->
+                Files.write(
+                    queryDebugFile,
+                    (q.key.second + " = {" + q.value.joinToString(",") + "}\n").toByteArray(),
+                    StandardOpenOption.APPEND
+                )
 
                 if (q.key.second in SaigenMF.allQueriedLabels) {
                     SaigenMF.allQueriedLabels.remove(q.key.second)
                 }
             }
 
-            Files.write(queryDebugFile, ("Labels for which we could not get any results: " + SaigenMF.allQueriedLabels + "\n").toByteArray(), StandardOpenOption.APPEND)
+            Files.write(
+                queryDebugFile,
+                ("Labels for which we could not get any results: " + SaigenMF.allQueriedLabels + "\n").toByteArray(),
+                StandardOpenOption.APPEND
+            )
         }
 
         private fun getCAMs(): List<CAM> {
@@ -125,7 +145,12 @@ class Main {
         }
 
         private fun debug() {
-            val link = Storage(sortedSetOf(LinkProvider(), DictionaryProvider(mapOf("name" to listOf("first name", "second name")))))
+            val link = Storage(
+                sortedSetOf(
+                    LinkProvider(),
+                    DictionaryProvider(mapOf("name" to listOf("first name", "second name")))
+                )
+            )
 
             val r = link.query(listOf("address", "name", "city", "email", "phone", "car"))
 

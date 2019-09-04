@@ -1,6 +1,10 @@
 package org.droidmate.saigen
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import org.droidmate.deviceInterface.exploration.Rectangle
 import org.droidmate.exploration.ExplorationContext
 import org.droidmate.exploration.modelFeatures.ModelFeature
@@ -29,14 +33,21 @@ import java.awt.Graphics2D
 import java.io.File
 import java.io.IOException
 
-
 class SaigenMF : ModelFeature() {
     companion object {
         @JvmStatic
         private val log: Logger by lazy { LoggerFactory.getLogger(this::class.java) }
 
-        val concreteIDMap = mutableMapOf<ConcreteId, Int>() // Int param: 0 -> widget found, but not touched yet. 1 -> widget was filled by DBPedia, DictionaryProvider... 2 -> not yet implemeneted, but in future: widgets was filled with random input (requires DM2 change)
-        val queryMap = mutableMapOf<Pair<UUID, String>, List<String>>() // key: <queryID, label>, values: from DBPedia...
+        /**
+         * // Int param:
+         * 0 -> widget found, but not touched yet.
+         * 1 -> widget was filled by DBPedia, DictionaryProvider...
+         * 2 -> not yet implemeneted, but in future: widgets was filled with random input (requires DM2 change)
+         */
+        val concreteIDMap =
+            mutableMapOf<ConcreteId, Int>()
+        val queryMap =
+            mutableMapOf<Pair<UUID, String>, List<String>>() // key: <queryID, label>, values: from DBPedia...
         val allQueriedLabels = mutableSetOf<String>()
 
         lateinit var context: ExplorationContext
@@ -45,19 +56,29 @@ class SaigenMF : ModelFeature() {
     override val coroutineContext: CoroutineContext = CoroutineName("SaigenMF") + Job()
 
     // private val storage = Storage(sortedSetOf(LinkProvider()))
-    private val storage = Storage(sortedSetOf(LinkProvider(), DictionaryProvider(mapOf("user" to listOf("Johnny1999", "Emmmma95"), "password" to listOf("sec", "rets"), "url" to listOf("http://google.com")))))
-
+    private val storage = Storage(
+        sortedSetOf(
+            LinkProvider(),
+            DictionaryProvider(
+                mapOf(
+                    "user" to listOf("Johnny1999", "Emmmma95"),
+                    "password" to listOf("sec", "rets"),
+                    "url" to listOf("http://google.com")
+                )
+            )
+        )
+    )
 
     /**
      * Initialized on the onAppExplorationStarted
      */
     private lateinit var trace: ExplorationTrace
 
-
     /**
      * Labels for which no query is found
      */
-    private val blacklistedWords = mutableListOf<String>() // "email", "password", "username", "login", "screen", "nonoun")
+    private val blacklistedWords =
+        mutableListOf<String>() // "email", "password", "username", "login", "screen", "nonoun")
 
     /**
      * Value of the last storage query, updated when reaching a state
@@ -79,14 +100,16 @@ class SaigenMF : ModelFeature() {
 
         log.debug("MARKER InsertedTextValues: " + trace.insertedTextValues())
 
-        if (this.isPassword && this.text.isNotBlank() && this.text != this.hintText) { // password fields can't be tested for equality, as the input text looks like "***"
+        // password fields can't be tested for equality, as the input text looks like "***"
+        if (this.isPassword && this.text.isNotBlank() && this.text != this.hintText) {
             return true
         }
 
         return this.text.isNotBlank() && // has text
                 trace.insertedTextValues()
                     .map { it.replace(";", "<semicolon>").replace(Regex("\\r\\n|\\r|\\n"), "<newline>").trim() }
-                    .any { it == this.text.removeSuffix("<newline>") } // removes trailing <newline> if it was added by setText with sendEnter=true
+                    // removes trailing <newline> if it was added by setText with sendEnter=true
+                    .any { it == this.text.removeSuffix("<newline>") }
     }
 
     private fun Widget.notFilled(): Boolean {
@@ -147,16 +170,23 @@ class SaigenMF : ModelFeature() {
 
         val toFill = dataWidgets
             .filter { it.notFilled() }
-            .map { Pair(it, queryResult.firstOrNull { p -> p.label == LabelMatcher.cachedLabel(it) }?.values.orEmpty()) }
+            .map {
+                Pair(
+                    it,
+                    queryResult.firstOrNull { p -> p.label == LabelMatcher.cachedLabel(it) }?.values.orEmpty()
+                )
+            }
             .toMap()
         log.trace("Data widgets to fill: ${toFill.count()}")
 
         return toFill
     }
 
-    //For randomly filled widgets, interactions does not contain "ActionQueue-START", "ActionQueue-End", so the image will be named after the TextInsert action. If, however, we find an "ActionQueue-START", then the image file will have the name of that action.
-    suspend fun drawOnScreenshots(interactions: List<Interaction>) {
-        var rects: MutableList<Rectangle> = mutableListOf<Rectangle>()
+    // For randomly filled widgets, interactions does not contain "ActionQueue-START", "ActionQueue-End", so
+    // the image will be named after the TextInsert action. If, however, we find an "ActionQueue-START", then the
+    // image file will have the name of that action.
+    private suspend fun drawOnScreenshots(interactions: List<Interaction>) {
+        val rects: MutableList<Rectangle> = mutableListOf()
         var actionId = -1
 
         assert(interactions.isNotEmpty())
@@ -199,8 +229,6 @@ class SaigenMF : ModelFeature() {
             } catch (e: IOException) {
                 e.printStackTrace()
             }
-
-
         }
     }
 
@@ -226,7 +254,6 @@ class SaigenMF : ModelFeature() {
             .map { it.value }
             .distinct()
         log.trace("Requested terms: ${nouns.joinToString()}")
-
 
         nouns.map { allQueriedLabels.add(it) }
 
