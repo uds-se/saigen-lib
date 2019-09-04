@@ -9,12 +9,6 @@ jdk:
   # Most of DroidMate is compiled with Java 8.
   - oraclejdk11
 
-env:
-  global:
-
-    # Required to obtain reference to jarsigner.
-    - JAVA_HOME=/usr/lib/jvm/java-11-oracle
-
 before_install:
 
   # Change to the directory containing the main build script of DroidMate.
