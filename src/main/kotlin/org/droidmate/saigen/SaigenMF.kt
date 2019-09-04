@@ -51,6 +51,10 @@ class SaigenMF : ModelFeature() {
         val allQueriedLabels = mutableSetOf<String>()
 
         lateinit var context: ExplorationContext<*, *, *>
+
+        fun isContextInitialized(): Boolean {
+            return ::context.isInitialized
+        }
     }
 
     override val coroutineContext: CoroutineContext = CoroutineName("SaigenMF") + Job()

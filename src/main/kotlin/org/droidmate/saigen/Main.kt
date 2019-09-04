@@ -56,6 +56,10 @@ class Main {
 
         // This method must be executed after SaigenMF.context was initialized. Kinda hacky but a good way to get baseDir.
         private fun writeStatisticsToFile(cfg: ConfigurationWrapper) {
+            if (!SaigenMF.isContextInitialized()) {
+                return
+            }
+
             println("Writing stats.txt")
 
             val baseDir = SaigenMF.context.model.config.baseDir
@@ -67,7 +71,7 @@ class Main {
             Files.deleteIfExists(statisticsFile)
             Files.createFile(statisticsFile)
 
-            var uniqueWidgets = mutableMapOf<UUID, Int>()
+            val uniqueWidgets = mutableMapOf<UUID, Int>()
             SaigenMF.concreteIDMap.forEach { (key, value) ->
                 if (!uniqueWidgets.containsKey(key.uid) || value != 0)
                     uniqueWidgets[key.uid] = value
