@@ -1,10 +1,36 @@
 # Android language used because it installs Android SDK required by DroidMate.
-language: java
+language: android
 
 git:
   # To speed up things. By default it is 50.
   depth: 1 
-  
+
+android:
+  components:
+
+    # Build tools
+    # Tools package is required by Travis-CI in order to locate "build-tools",
+    # Official bugtracker issue: https://github.com/travis-ci/travis-ci/issues/5036
+    # More info: https://docs.travis-ci.com/user/languages/android/#Overview
+    - tools
+    - platform-tools
+    - build-tools-27.0.3    # Packages required by UIAutomator2
+    - build-tools-28.0.3    # Packages required by UIAutomator2
+    - extra-android-support
+    - extra-android-m2repository
+
+    # DroidMate supports Android API 23 (6.0.1).
+    - android-23
+    - android-25
+    - android-26
+    - android-27
+    - android-28
+
+env:
+  global:
+    # Required to obtain handles to aapt and adb.
+    - ANDROID_HOME=/usr/local/android-sdk
+
 jdk:
   # Most of DroidMate is compiled with Java 8.
   - oraclejdk11
