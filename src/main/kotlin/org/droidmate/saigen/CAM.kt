@@ -12,14 +12,14 @@ import java.nio.file.Path
  * Concept to action mapping
  */
 data class CAM(private val sourceConcepts: List<String>, private val targetConcepts: List<String>) {
-    private fun matchesSources(state: State): Boolean {
+    private fun matchesSources(state: State<*>): Boolean {
         val widgetLabelMap = LabelMatcher.getLabels(state)
 
         return widgetLabelMap.values
             .all { this.sourceConcepts.contains(it) }
     }
 
-    private fun matchesTargets(state: State): Boolean {
+    private fun matchesTargets(state: State<*>): Boolean {
         val concepts = state.visibleTargets
             .filter { it.isVisible }
             .flatMap { widget ->
@@ -33,7 +33,7 @@ data class CAM(private val sourceConcepts: List<String>, private val targetConce
             .all { concepts.contains(it) }
     }
 
-    fun getTargets(state: State): List<Widget> {
+    fun getTargets(state: State<*>): List<Widget> {
         val concepts = state.visibleTargets
             .flatMap { widget ->
                 val nouns = widget.nouns()
@@ -51,7 +51,7 @@ data class CAM(private val sourceConcepts: List<String>, private val targetConce
      * Checks if the [state] applies to all source and target concepts from this CAM.
      * For sources, only input fields are considered.
      */
-    fun matches(state: State): Boolean {
+    fun matches(state: State<*>): Boolean {
         return matchesSources(state) &&
                 matchesTargets(state)
     }

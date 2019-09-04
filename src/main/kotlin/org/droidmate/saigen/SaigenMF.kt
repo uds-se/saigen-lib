@@ -50,7 +50,7 @@ class SaigenMF : ModelFeature() {
             mutableMapOf<Pair<UUID, String>, List<String>>() // key: <queryID, label>, values: from DBPedia...
         val allQueriedLabels = mutableSetOf<String>()
 
-        lateinit var context: ExplorationContext
+        lateinit var context: ExplorationContext<*, *, *>
     }
 
     override val coroutineContext: CoroutineContext = CoroutineName("SaigenMF") + Job()
@@ -72,7 +72,7 @@ class SaigenMF : ModelFeature() {
     /**
      * Initialized on the onAppExplorationStarted
      */
-    private lateinit var trace: ExplorationTrace
+    private lateinit var trace: ExplorationTrace<*, *>
 
     /**
      * Labels for which no query is found
@@ -117,7 +117,7 @@ class SaigenMF : ModelFeature() {
                 !this.isBlacklisted()
     }
 
-    override fun onAppExplorationStarted(context: ExplorationContext) {
+    override fun onAppExplorationStarted(context: ExplorationContext<*, *, *>) {
         this.trace = context.explorationTrace
         SaigenMF.context = context
     }
@@ -138,7 +138,7 @@ class SaigenMF : ModelFeature() {
         return queriedData
     }
 
-    suspend fun getInputValues(newState: State): Map<Widget, List<String>> {
+    suspend fun getInputValues(newState: State<*>): Map<Widget, List<String>> {
         val queryResult = getLastQueryData()
 
         if (queryResult.isEmpty()) {
@@ -185,7 +185,7 @@ class SaigenMF : ModelFeature() {
     // For randomly filled widgets, interactions does not contain "ActionQueue-START", "ActionQueue-End", so
     // the image will be named after the TextInsert action. If, however, we find an "ActionQueue-START", then the
     // image file will have the name of that action.
-    private suspend fun drawOnScreenshots(interactions: List<Interaction>) {
+    private suspend fun drawOnScreenshots(interactions: List<Interaction<*>>) {
         val rects: MutableList<Rectangle> = mutableListOf()
         var actionId = -1
 
@@ -234,9 +234,9 @@ class SaigenMF : ModelFeature() {
 
     override suspend fun onNewAction(
         traceId: UUID,
-        interactions: List<Interaction>,
-        prevState: State,
-        newState: State
+        interactions: List<Interaction<*>>,
+        prevState: State<*>,
+        newState: State<*>
     ) {
         async { drawOnScreenshots(interactions) }
 

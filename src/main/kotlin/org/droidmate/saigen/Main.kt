@@ -2,11 +2,9 @@ package org.droidmate.saigen
 
 import kotlinx.coroutines.runBlocking
 import org.droidmate.api.ExplorationAPI
-import org.droidmate.command.ExploreCommandBuilder
 import org.droidmate.configuration.ConfigurationBuilder
 import org.droidmate.configuration.ConfigurationWrapper
-import org.droidmate.exploration.SelectorFunction
-import org.droidmate.exploration.StrategySelector
+import org.droidmate.explorationModel.factory.DefaultModelProvider
 import org.droidmate.saigen.storage.DictionaryProvider
 import org.droidmate.saigen.storage.LinkProvider
 import org.droidmate.saigen.storage.Storage
@@ -29,7 +27,6 @@ class Main {
                 // System.exit(0)
                 val cfg = ConfigurationBuilder().build(args)
                 // val builder = ExploreCommandBuilder.fromConfig(cfg)
-
                 // ExplorationAPI.explore(cfg, builder)
 
                 /** *
@@ -42,27 +39,15 @@ class Main {
 
                 System.exit(0)*/
 
-                val saigenSelector: SelectorFunction = { eContext, pool, _ ->
-                    val saigen by lazy { eContext.getOrCreateWatcher<SaigenMF>() }
-                    saigen.join()
-
-                    pool.getFirstInstanceOf(SaigenRandom::class.java)
-                }
-
-                val commandBuilder = ExploreCommandBuilder.fromConfig(cfg)
+                val commandBuilder = ExplorationAPI.buildFromConfig(cfg)
                     // Add custom strategies
-                    .withStrategy(SaigenRandom(cfg.randomSeed))
-                    .withStrategy(SaigenCAM(emptyList(), 0))
-                    // Remove random and cannotExplore
-                    .remove(StrategySelector.randomWidget)
-                    // Add custom selector
-                    // .append("CAM", camSelector, arrayOf(getCAMs()))
-                    .append("SAIGEN", saigenSelector)
+                commandBuilder.withStrategy(SaigenRandom(commandBuilder.getNextSelectorPriority()))
+                    .withStrategy(SaigenCAM(commandBuilder.getNextSelectorPriority(), emptyList()))
 
                 ExplorationAPI.explore(
                     args,
-                    commandBuilder = commandBuilder,
-                    watcher = emptyList()
+                    commandBuilder,
+                    modelProvider = DefaultModelProvider()
                 )
 
                 writeStatisticsToFile(cfg)

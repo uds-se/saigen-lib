@@ -1,3 +1,4 @@
+/*
 package org.droidmate.saigen
 
 import org.droidmate.exploration.SelectorFunction
@@ -16,3 +17,4 @@ val camSelector: SelectorFunction = { context, pool, data ->
         else -> null
     }
 }
+*/

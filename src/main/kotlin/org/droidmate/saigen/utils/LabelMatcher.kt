@@ -95,7 +95,7 @@ object LabelMatcher {
      */
     private val widgetLabelCache = mutableMapOf<UUID, String>()
 
-    private fun Widget.getLabel(state: State): String {
+    private fun Widget.getLabel(state: State<*>): String {
 
         if (widgetLabelCache.containsKey(this.uid)) {
             return widgetLabelCache[this.uid].orEmpty()
@@ -135,7 +135,7 @@ object LabelMatcher {
     /**
      * Returns all data widgets on the screen and their associated cachedLabel descriptors
      */
-    fun getLabels(state: State): Map<Widget, String> {
+    fun getLabels(state: State<*>): Map<Widget, String> {
         val uiWidgets = state.widgets.toList()
 
         val dataWidgets = uiWidgets
