@@ -131,6 +131,8 @@ object LabelMatcher {
      * Returns a label from the cache
      */
     fun cachedLabel(widget: Widget) = widgetLabelCache[widget.uid].orEmpty()
+    fun cachedLabel(widget: UUID) = widgetLabelCache[widget].orEmpty()
+
 
     /**
      * Returns all data widgets on the screen and their associated cachedLabel descriptors
