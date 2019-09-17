@@ -32,8 +32,6 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.io.File
 import java.io.IOException
-import org.droidmate.saigen.Main.Companion.extractWidgetsAndLabels
-
 
 class SaigenMF : ModelFeature() {
     companion object {
