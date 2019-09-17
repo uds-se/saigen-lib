@@ -32,6 +32,8 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.io.File
 import java.io.IOException
+import org.droidmate.saigen.Main.Companion.extractWidgetsAndLabels
+
 
 class SaigenMF : ModelFeature() {
     companion object {
@@ -243,6 +245,8 @@ class SaigenMF : ModelFeature() {
         newState: State<*>
     ) {
         async { drawOnScreenshots(interactions) }
+
+        // log.debug("STATE: " + newState + "\n" + "test: " + extractWidgetsAndLabels(newState))
 
         val matchedWidgets = LabelMatcher.getLabels(newState)
 

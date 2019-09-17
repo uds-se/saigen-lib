@@ -5,8 +5,11 @@ import org.droidmate.api.ExplorationAPI
 import org.droidmate.configuration.ConfigurationBuilder
 import org.droidmate.configuration.ConfigurationWrapper
 import org.droidmate.explorationModel.factory.DefaultModelProvider
+import org.droidmate.explorationModel.interaction.State
+import org.droidmate.explorationModel.interaction.Widget
 import org.droidmate.saigen.storage.DictionaryProvider
 import org.droidmate.saigen.storage.LinkProvider
+import org.droidmate.saigen.storage.QueryResult
 import org.droidmate.saigen.storage.Storage
 import org.droidmate.saigen.utils.LabelMatcher
 import java.nio.file.Files
@@ -53,6 +56,31 @@ class Main {
 
                 writeStatisticsToFile(cfg)
             }
+        }
+
+        // API 1: For a given state, return map of input widgets and associated label (noun)
+        fun extractWidgetsAndLabels(state: State<Widget>): Map<Widget, String> {
+            val matchedWidgets = LabelMatcher.getLabels(state)
+            return matchedWidgets
+        }
+
+        // TODO: maybe pass this as parameter to getInputsForLabels?
+        private val storage = Storage(
+            sortedSetOf(
+                LinkProvider(),
+                DictionaryProvider(
+                    mapOf(
+                        "user" to listOf("Johnny1999", "Emmmma95"),
+                        "password" to listOf("sec", "rets"),
+                        "url" to listOf("http://google.com")
+                    )
+                )
+            )
+        )
+
+        // API 2: For a given set of labels, return map of the labels to appropriate input samples
+        fun getInputsForLabels(labels: List<String>): List<QueryResult> {
+            return storage.query(labels)
         }
 
         // This method must be executed after SaigenMF.context was initialized. Kinda hacky but a good way to get baseDir.
