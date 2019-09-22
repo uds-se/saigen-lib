@@ -32,7 +32,7 @@ object NLP {
     private val cache = mutableMapOf<String, List<String>>()
 
     @JvmStatic
-    private val tagger = MaxentTagger("models/english-left3words-distsim.tagger")
+    private val tagger = MaxentTagger("models/english-left3words-distsim.tagger") // src/main/resources/models/english-left3words-distsim.tagger") // models/english-left3words-distsim.tagger")
 
     @JvmStatic
     fun getSynonyms(word: String): List<String> {

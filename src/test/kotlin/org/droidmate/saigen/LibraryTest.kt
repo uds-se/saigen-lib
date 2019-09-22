@@ -1,6 +1,6 @@
 package org.droidmate.saigen
 
-import org.droidmate.saigen.Main.Companion.getInputsForLabels
+import org.droidmate.saigen.Lib.Companion.getInputsForLabels
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith

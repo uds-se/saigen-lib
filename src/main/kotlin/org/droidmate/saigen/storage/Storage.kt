@@ -1,6 +1,5 @@
 package org.droidmate.saigen.storage
 
-import org.droidmate.saigen.SaigenMF
 import org.droidmate.saigen.utils.add
 import org.droidmate.saigen.utils.getSynonyms
 import org.droidmate.saigen.utils.hasValue
@@ -11,7 +10,7 @@ import java.util.SortedSet
 class Storage constructor(private val storageProviders: SortedSet<StorageProvider>) {
     companion object {
         @JvmStatic
-        val log: Logger by lazy { LoggerFactory.getLogger(SaigenMF::class.java) }
+        val log: Logger by lazy { LoggerFactory.getLogger(Storage::class.java) }
     }
 
     /**

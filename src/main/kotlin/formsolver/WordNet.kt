@@ -7,7 +7,7 @@ import edu.mit.jwi.Dictionary
 import edu.mit.jwi.item.POS
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.File
+// import java.io.File
 import java.io.IOException
 import java.net.URL
 
@@ -16,7 +16,9 @@ object WordNet {
     @JvmStatic
     private val logger: Logger by lazy { LoggerFactory.getLogger(this::class.java) }
 
-    private val path = "WordNet-3.0" + File.separator + "dict"
+    // this does not work with files packed in jar: https://stackoverflow.com/questions/36174897/issue-with-relative-paths-of-resources-files-in-an-executable-jar-using-maven
+    // private val path = "WordNet-3.0" + File.separator + "dict"
+    private val path: String = System.getenv("WORDNET_DICT")
     private val url = URL("file", null, path)
     private val dict = Dictionary(url)
 

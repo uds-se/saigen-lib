@@ -2,7 +2,7 @@ package org.droidmate.saigen.utils
 
 import org.droidmate.explorationModel.interaction.State
 import org.droidmate.explorationModel.interaction.Widget
-import org.droidmate.saigen.SaigenMF
+import org.droidmate.saigen.storage.Storage
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -88,7 +88,7 @@ fun Widget.becceDistance(dataWidget: Widget): Double {
 
 object LabelMatcher {
     @JvmStatic
-    val log: Logger by lazy { LoggerFactory.getLogger(SaigenMF::class.java) }
+    val log: Logger by lazy { LoggerFactory.getLogger(Storage::class.java) }
 
     /**
      * Store the data widgets which have already been mapped
