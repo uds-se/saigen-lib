@@ -9,7 +9,6 @@ import org.droidmate.saigen.storage.QueryResult
 import org.droidmate.saigen.storage.Storage
 import org.droidmate.saigen.utils.LabelMatcher
 
-
 class Lib {
     companion object {
         @JvmStatic
