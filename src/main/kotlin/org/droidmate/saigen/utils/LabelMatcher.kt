@@ -13,7 +13,7 @@ import kotlin.math.sqrt
 /**
  * Checks if the widget is currently visible on the screen, can be interacted with and is an input field
  */
-fun Widget.isVisibleDataWidget(): Boolean = this.definedAsVisible && this.isInputField && this.canInteractWith//this.isVisible && this.isInputField && this.canInteractWith
+fun Widget.isVisibleDataWidget(): Boolean = this.definedAsVisible && this.isInputField && this.canInteractWith // this.isVisible && this.isInputField && this.canInteractWith
 
 /**
  * Return all the nouns associated with the widget text
