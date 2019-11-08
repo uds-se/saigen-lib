@@ -93,7 +93,7 @@ object LabelMatcher {
     /**
      * Store the data widgets which have already been mapped
      */
-    private val widgetLabelCache = mutableMapOf<UUID, String>()
+    val widgetLabelCache = mutableMapOf<UUID, String>()
 
     private fun Widget.getLabel(state: State<*>): String {
 

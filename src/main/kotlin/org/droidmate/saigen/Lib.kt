@@ -44,5 +44,11 @@ class Lib {
         fun getInputsForLabels(labels: List<String>): List<QueryResult> {
             return storage.query(labels)
         }
+
+        // API 3: (for standalone droidmate-saigen)
+        @JvmStatic
+        fun cachedLabel(widget: Widget): String {
+            return LabelMatcher.widgetLabelCache[widget.uid].orEmpty()
+        }
     }
 }

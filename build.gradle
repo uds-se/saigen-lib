@@ -1,5 +1,5 @@
 plugins {
-     id 'org.jetbrains.kotlin.jvm' version '1.3.21'
+     id 'org.jetbrains.kotlin.jvm' version '1.3.50'//21'
      id "com.github.johnrengelman.shadow" version "5.0.0"
 }
 
@@ -71,6 +71,7 @@ dependencies {
 
     // compile 'org.droidmate:droidmate-2:+'
     // implementation "com.github.uds-se.droidmate:droidmate-2:2.0.0"
+    
     implementation("com.github.hotzkow:explorationModel")
     implementation("com.github.uds-se.droidmate:droidmate-2:master-SNAPSHOT")
     
