@@ -130,6 +130,6 @@ class FormSolver(
         val logger: Logger by lazy { LoggerFactory.getLogger(this::class.java) }
 
         @JvmStatic
-        var endpoint = "https://query.wikidata.org/sparql/"//http://dbpedia.org/sparql/"
+        var endpoint = "https://query.wikidata.org/sparql"//http://dbpedia.org/sparql/"
     }
 }
