@@ -8,7 +8,7 @@ import org.droidmate.saigen.storage.LinkProvider
 import org.droidmate.saigen.storage.QueryResult
 import org.droidmate.saigen.storage.Storage
 import org.droidmate.saigen.utils.LabelMatcher
-import java.util.*
+import java.util.UUID
 
 class Lib {
     companion object {
