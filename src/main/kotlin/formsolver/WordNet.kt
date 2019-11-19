@@ -9,7 +9,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 // import java.io.File
 import java.io.IOException
-import java.net.URL
+import java.lang.RuntimeException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 object WordNet {
 
@@ -18,9 +21,12 @@ object WordNet {
 
     // this does not work with files packed in jar: https://stackoverflow.com/questions/36174897/issue-with-relative-paths-of-resources-files-in-an-executable-jar-using-maven
     // private val path = "WordNet-3.0" + File.separator + "dict"
-    private val path: String = System.getenv("WORDNET_DICT")
-    private val url = URL("file", null, path)
-    private val dict = Dictionary(url)
+    private val path: Path = when {
+        System.getenv("WORDNET_DICT") != null -> Paths.get(System.getenv("WORDNET_DICT"))
+        Files.exists(Paths.get("./WordNet-3.0/dict")) -> Paths.get("./WordNet-3.0/dict")
+        else -> throw RuntimeException("Unable to find WordNet-3.0 dictionary")
+    }
+    private val dict = Dictionary(path.toFile())
 
     init {
         dict.open()

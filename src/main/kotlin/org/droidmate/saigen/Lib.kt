@@ -8,6 +8,7 @@ import org.droidmate.saigen.storage.LinkProvider
 import org.droidmate.saigen.storage.QueryResult
 import org.droidmate.saigen.storage.Storage
 import org.droidmate.saigen.utils.LabelMatcher
+import java.util.UUID
 
 class Lib {
     companion object {
@@ -49,6 +50,12 @@ class Lib {
         @JvmStatic
         fun cachedLabel(widget: Widget): String {
             return LabelMatcher.widgetLabelCache[widget.uid].orEmpty()
+        }
+
+        // API 4: (for standalone droidmate-saigen)
+        @JvmStatic
+        fun cachedLabel(widgetUUID: UUID): String {
+            return LabelMatcher.widgetLabelCache[widgetUUID].orEmpty()
         }
     }
 }
