@@ -29,7 +29,7 @@ class Lib {
         // TODO: maybe pass this as parameter to getInputsForLabels?
         private val storage = Storage(
             sortedSetOf(
-                LinkProvider(),
+                LinkProvider("wikidata"),
                 DictionaryProvider(
                     mapOf(
                         "user" to listOf("Johnny1999", "Emmmma95"),

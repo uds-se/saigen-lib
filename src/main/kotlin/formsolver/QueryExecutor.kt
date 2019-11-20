@@ -23,8 +23,6 @@ class QueryExecutor internal constructor(
     internal var validForest: MutableList<Graph> = mutableListOf()
     internal var cutLabels: MutableList<String> = mutableListOf()
     private lateinit var updatedGraph: Graph
-    private val wikidataPrefix = "PREFIX wikibase: <http://wikiba.se/ontology#>" + "PREFIX wdt: <http://www.wikidata.org/prop/direct/>" + "PREFIX bd: <http://www.bigdata.com/rdf#>" +  "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
-
 
     internal fun runFinalQuery(maxEntries: Int) {
         CommonData.queryToValuesMap.clear() // might want to comment these two lines when using RelationshipGenerator in FormSolver.kt.
@@ -48,22 +46,15 @@ class QueryExecutor internal constructor(
             val ite = tmp_g.find(Triple.ANY)
             while (ite.hasNext()) {
                 val tri = ite.next()
-                // queryString =
-                //     queryString + tri.subject.toString() + " " + tri.predicate + " " + tri.`object`.toString() + " . \n"
-                // using AS to re-label ?itemLabel to queried string to make Storage.queryProvidersRecursively: .filterNot { l -> result.first.any { it == l } }    work correctly.
-                // queryString = wikidataPrefix + "SELECT DISTINCT (?itemLabel AS ?" + tri.subject.toString() + ") WHERE { ?s ?label \"" + tri.subject.toString() + "\"@en ." + "?item wdt:P31 ?s ." + "SERVICE wikibase:label { bd:serviceParam wikibase:language \"en\" . }} LIMIT $maxEntries"// "SELECT DISTINCT " + variability + "\n" + "WHERE { \n"
-                queryString = wikidataPrefix + "SELECT DISTINCT (?final AS ?" + tri.subject.toString() + ") WHERE { ?s ?label \"" + tri.subject.toString() + "\"@en ." + "?item wdt:P31 ?s ." + "?item rdfs:label ?final ." + "FILTER(LANG(?final) = \"en\") } LIMIT $maxEntries"
+                queryString = CommonData.wikidataPrefix + "SELECT DISTINCT (?final AS ?" + tri.subject.toString() + ") WHERE { ?s ?label \"" + tri.subject.toString() + "\"@en ." + "?item wdt:P31 ?s ." + "?item rdfs:label ?final ." + "FILTER(LANG(?final) = \"en\") } LIMIT $maxEntries"
             }
 
-
-                // queryString = wikidataPrefix + "SELECT DISTINCT ?itemLabel WHERE { ?s ?label \"" + tri.subject.toString() + "\"@en ." + "?item wdt:P31 ?s ." + "SERVICE wikibase:label { bd:serviceParam wikibase:language \"en\" . }} LIMIT $maxEntries"// "SELECT DISTINCT " + variability + "\n" + "WHERE { \n"
-            // queryString = "$queryString} LIMIT $maxEntries" // "500"
 
             logger.debug("Query:")
             logger.debug(queryString)
             CommonData.outputQueries.add(queryString)
             val query2 = QueryFactory.create(queryString)
-            val qExec = QueryExecutionFactory.sparqlService(FormSolver.endpoint, query2)
+            val qExec = QueryExecutionFactory.sparqlService(FormSolver.wikiDataEndpoint, query2)
             var rs: ResultSet? = null
             try {
                 rs = qExec.execSelect()
@@ -116,37 +107,6 @@ class QueryExecutor internal constructor(
         return this.cutLabels
     }
 
-    /*fun eseguiSingolaQuery(g: Graph): Int {
-        try {
-            val variabili = this.costruisciStringaVarSelect(g)
-            var queryString = CommonData.prefix.toString() + "SELECT " + variabili + "\n" + "WHERE { \n"
-            val ite = g.find(Triple.ANY)
-            while (ite.hasNext()) {
-                val tri = ite.next()
-                queryString = queryString + tri.subject.toString() + " " + tri.predicate + " " + tri.`object`.toString() + " . \n"
-            }
-            queryString = "$queryString} LIMIT 200"
-            val query2 = QueryFactory.create(queryString)
-            val qexec = QueryExecutionFactory.sparqlService(FormSolver.endpoint, query2)
-            var rs: ResultSet? = null
-            try {
-                rs = qexec.execSelect()
-            } catch (exception: Exception) {
-                // empty catch block
-            }
-
-            var numRes = 0
-            while (rs != null && rs.hasNext()) {
-                rs.next()
-                ++numRes
-            }
-            qexec.close()
-            return numRes
-        } catch (variabili: Exception) {
-            return 0
-        }
-    }*/
-
     private fun costruisciStringaVarSelect(gr: Graph): String {
         var variabiliSelect = ""
         this.selectionVariability = emptyList()
@@ -181,7 +141,7 @@ class QueryExecutor internal constructor(
                     if (tri.`object`.uri[0] == '?') variabili + tri.`object`.uri + " " else variabili + tri.subject.uri + " "
             }
             variabili = "(COUNT(*) AS ?count)"
-            queryString = wikidataPrefix + "SELECT DISTINCT " + variabili + "WHERE { \n"
+            queryString = CommonData.wikidataPrefix + "SELECT DISTINCT " + variabili + "WHERE { \n"
             ite = g.find(Triple.ANY)
             while (ite.hasNext()) {
                 tri = ite.next()
@@ -190,7 +150,7 @@ class QueryExecutor internal constructor(
             }
             queryString += "} LIMIT ${CommonData.proximityLimit}"
             val query2 = QueryFactory.create(queryString)
-            val qexec = QueryExecutionFactory.sparqlService(FormSolver.endpoint, query2)
+            val qexec = QueryExecutionFactory.sparqlService(FormSolver.wikiDataEndpoint, query2)
             var rs: ResultSet? = null
             try {
                 rs = qexec.execSelect()

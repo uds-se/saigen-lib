@@ -27,13 +27,12 @@ internal class AssociationsBuilder(
     private var useSynPred: Boolean = false
     private var useSynCl: Boolean = false
 
-    private val wikidataPrefix = "PREFIX wikibase: <http://wikiba.se/ontology#>" + "PREFIX wdt: <http://www.wikidata.org/prop/direct/>" + "PREFIX bd: <http://www.bigdata.com/rdf#>" +  "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
 
     private fun <T> runQuery(queryStr: String, processResult: (ResultSet?) -> T): T {
         try {
             logger.debug("Running query: " + queryStr)
             val query = QueryFactory.create(queryStr)
-            QueryExecutionFactory.sparqlService(FormSolver.endpoint, query).use { qExec ->
+            QueryExecutionFactory.sparqlService(FormSolver.wikiDataEndpoint, query).use { qExec ->
                 val queryResult: ResultSet? = try {
                     ++this.nQuery
                     qExec.execSelect()
@@ -58,11 +57,7 @@ internal class AssociationsBuilder(
         var x = 0
         while (x < synonyms.size) {
             val queryTag = Utility.initialToLowerCase(synonyms[x])
-            // val queryString =
-                // CommonData.prefix + "SELECT * WHERE { ?node1 " + namespace2 + queryTag + " " + "?node2 . }" + "LIMIT 1" // 1000" Nataniel
-            // val queryString =
-            //    wikidataPrefix + "SELECT DISTINCT ?itemLabel WHERE { ?s ?label \"" + queryTag + "\"@en ." + "?item wdt:P31 ?s ." + "SERVICE wikibase:label { bd:serviceParam wikibase:language \"en\" . }}" + "LIMIT 1" // 1000" Nataniel
-            val queryString = wikidataPrefix + "SELECT DISTINCT ?final WHERE { ?s ?label \"" + queryTag + "\"@en ." + "?item wdt:P31 ?s ." + "?item rdfs:label ?final ." + "FILTER(LANG(?final) = \"en\") } LIMIT 1"
+            val queryString = CommonData.wikidataPrefix + "SELECT DISTINCT ?final WHERE { ?s ?label \"" + queryTag + "\"@en ." + "?item wdt:P31 ?s ." + "?item rdfs:label ?final ." + "FILTER(LANG(?final) = \"en\") } LIMIT 1"
 
             val quantity = runQuery(queryString) { result ->
                 if (result?.hasNext() == true) {
@@ -119,7 +114,7 @@ internal class AssociationsBuilder(
         }
 
         // val queryString = CommonData.prefix + "SELECT (COUNT(*) as ?count) " + "WHERE {" + triple + "}"
-        val queryString = wikidataPrefix + "SELECT (COUNT(*) as ?count) " + "WHERE {" + triple + "}"
+        val queryString = CommonData.wikidataPrefix + "SELECT (COUNT(*) as ?count) " + "WHERE {" + triple + "}"
 
         val quantity = runQuery(queryString) { result ->
             if (result?.hasNext() == true) {

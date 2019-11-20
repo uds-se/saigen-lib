@@ -5,6 +5,7 @@ import formsolver.FormSolver
 import org.apache.jena.query.Query
 
 class LinkProvider @JvmOverloads constructor(
+    private val provider: String = "dbpedia", // "dbpedia", "wikidata"
     /**
      * Maximum number of entries which should be queried by link
      */
@@ -84,7 +85,7 @@ class LinkProvider @JvmOverloads constructor(
 
     private fun runLink(labels: List<String>) {
         // Run Link
-        val solver = FormSolver(labels.toTypedArray(), useThreshold, associationThreshold, heuristic)
+        val solver = FormSolver(provider, labels.toTypedArray(), useThreshold, associationThreshold, heuristic)
         solver.runProcess(maxEntries)
     }
 }
