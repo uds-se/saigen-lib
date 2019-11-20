@@ -23,6 +23,8 @@ class QueryExecutor internal constructor(
     internal var validForest: MutableList<Graph> = mutableListOf()
     internal var cutLabels: MutableList<String> = mutableListOf()
     private lateinit var updatedGraph: Graph
+    private val wikidataPrefix = "PREFIX wikibase: <http://wikiba.se/ontology#>" + "PREFIX wdt: <http://www.wikidata.org/prop/direct/>" + "PREFIX bd: <http://www.bigdata.com/rdf#>" +  "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
+
 
     internal fun runFinalQuery(maxEntries: Int) {
         CommonData.queryToValuesMap.clear() // might want to comment these two lines when using RelationshipGenerator in FormSolver.kt.
@@ -38,18 +40,24 @@ class QueryExecutor internal constructor(
             val tmp_g = GraphMinimization.minimize(g)
             ++this.numComponents
             obtainedResults[i] = 0
-            var variability = this.costruisciStringaVarSelect(tmp_g)
-            if (variability == "") {
-                variability = "*"
-            }
-            var queryString = CommonData.prefix + "SELECT DISTINCT " + variability + "\n" + "WHERE { \n"
+            // var variability = this.costruisciStringaVarSelect(tmp_g)
+            // if (variability == "") {
+            //     variability = "*"
+            // }
+            var queryString = ""
             val ite = tmp_g.find(Triple.ANY)
             while (ite.hasNext()) {
                 val tri = ite.next()
-                queryString =
-                    queryString + tri.subject.toString() + " " + tri.predicate + " " + tri.`object`.toString() + " . \n"
+                // queryString =
+                //     queryString + tri.subject.toString() + " " + tri.predicate + " " + tri.`object`.toString() + " . \n"
+                // using AS to re-label ?itemLabel to queried string to make Storage.queryProvidersRecursively: .filterNot { l -> result.first.any { it == l } }    work correctly.
+                // queryString = wikidataPrefix + "SELECT DISTINCT (?itemLabel AS ?" + tri.subject.toString() + ") WHERE { ?s ?label \"" + tri.subject.toString() + "\"@en ." + "?item wdt:P31 ?s ." + "SERVICE wikibase:label { bd:serviceParam wikibase:language \"en\" . }} LIMIT $maxEntries"// "SELECT DISTINCT " + variability + "\n" + "WHERE { \n"
+                queryString = wikidataPrefix + "SELECT DISTINCT (?final AS ?" + tri.subject.toString() + ") WHERE { ?s ?label \"" + tri.subject.toString() + "\"@en ." + "?item wdt:P31 ?s ." + "?item rdfs:label ?final ." + "FILTER(LANG(?final) = \"en\") } LIMIT $maxEntries"
             }
-            queryString = "$queryString} LIMIT $maxEntries" // "500"
+
+
+                // queryString = wikidataPrefix + "SELECT DISTINCT ?itemLabel WHERE { ?s ?label \"" + tri.subject.toString() + "\"@en ." + "?item wdt:P31 ?s ." + "SERVICE wikibase:label { bd:serviceParam wikibase:language \"en\" . }} LIMIT $maxEntries"// "SELECT DISTINCT " + variability + "\n" + "WHERE { \n"
+            // queryString = "$queryString} LIMIT $maxEntries" // "500"
 
             logger.debug("Query:")
             logger.debug(queryString)
@@ -173,7 +181,7 @@ class QueryExecutor internal constructor(
                     if (tri.`object`.uri[0] == '?') variabili + tri.`object`.uri + " " else variabili + tri.subject.uri + " "
             }
             variabili = "(COUNT(*) AS ?count)"
-            queryString = CommonData.prefix + "SELECT DISTINCT " + variabili + "WHERE { \n"
+            queryString = wikidataPrefix + "SELECT DISTINCT " + variabili + "WHERE { \n"
             ite = g.find(Triple.ANY)
             while (ite.hasNext()) {
                 tri = ite.next()

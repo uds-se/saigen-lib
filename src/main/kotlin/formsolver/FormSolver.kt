@@ -39,14 +39,14 @@ class FormSolver(
         logger.debug("Generation of associations is over")
 
         // The commented code below matches input fields semantically in activities. So if we have a "city" and a "car" input, it will try to find a city that is somewhat related to a car and get very few, clumsy results. In my test subject, it works better to query separately.
-        val genRel = RelationshipGenerator(this.graph, this.elements, this.elementsLv2)
+        /*val genRel = RelationshipGenerator(this.graph, this.elements, this.elementsLv2)
         genRel.analyseCorrelations()
         evaluator.addNQuery(genRel.nQuery)
         this.graph = genRel.graph
 
         val step3 = System.currentTimeMillis()
         evaluator.setEndTimeStep2(step3)
-        logger.debug("Generation of associations is over")
+        logger.debug("Generation of associations is over")*/
 
         val queryExecutor = QueryExecutor(this.graph, this.elements, this.heuristic)
         queryExecutor.runFinalQuery(maxEntries)
@@ -130,6 +130,6 @@ class FormSolver(
         val logger: Logger by lazy { LoggerFactory.getLogger(this::class.java) }
 
         @JvmStatic
-        var endpoint = "https://query.wikidata.org/sparql"//http://dbpedia.org/sparql/"
+        var endpoint = "https://query.wikidata.org/sparql" // http://dbpedia.org/sparql/"
     }
 }

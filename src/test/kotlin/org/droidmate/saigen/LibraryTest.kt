@@ -18,7 +18,7 @@ class LibraryTest {
 
     @Test
     fun getInputsForLabelsTest() {
-        val testLabels = listOf("car")
+        val testLabels = listOf("drink")
         val queryResults = getInputsForLabels(testLabels)
         assert(queryResults.size > 0)
     }
