@@ -3,10 +3,10 @@ package org.droidmate.saigen
 import kotlinx.coroutines.runBlocking
 import org.droidmate.explorationModel.interaction.State
 import org.droidmate.explorationModel.interaction.Widget
+import org.droidmate.saigen.storage.Storage
 import org.droidmate.saigen.storage.DictionaryProvider
 import org.droidmate.saigen.storage.LinkProvider
 import org.droidmate.saigen.storage.QueryResult
-import org.droidmate.saigen.storage.Storage
 import org.droidmate.saigen.utils.LabelMatcher
 import java.util.UUID
 
@@ -27,16 +27,18 @@ class Lib {
         }
 
         // TODO: maybe pass this as parameter to getInputsForLabels?
+        // sortedSetOf did delete one LinkProvider (duplicate) for unknown reason, so setOf for now.
         private val storage = Storage(
-            sortedSetOf(
-                LinkProvider("wikidata"),
+            setOf(
                 DictionaryProvider(
                     mapOf(
                         "user" to listOf("Johnny1999", "Emmmma95"),
                         "password" to listOf("sec", "rets"),
                         "url" to listOf("http://google.com")
                     )
-                )
+                ),
+                LinkProvider("wikidata"),
+                LinkProvider("dbpedia")
             )
         )
 

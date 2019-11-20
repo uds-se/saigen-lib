@@ -5,9 +5,11 @@ import org.droidmate.saigen.utils.getSynonyms
 import org.droidmate.saigen.utils.hasValue
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.SortedSet
+// import java.util.SortedSet
 
-class Storage constructor(private val storageProviders: SortedSet<StorageProvider>) {
+// class Storage constructor(private val storageProviders: SortedSet<StorageProvider>) {
+class Storage constructor(private val storageProviders: Set<StorageProvider>) {
+
     companion object {
         @JvmStatic
         val log: Logger by lazy { LoggerFactory.getLogger(Storage::class.java) }

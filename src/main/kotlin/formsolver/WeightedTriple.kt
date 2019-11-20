@@ -66,7 +66,7 @@ class WeightedTriple(val tripla: Triple, internal var euristica: Int) : Comparab
             this.pesoInv = pesoConn
         }
         if (this.euristica == 1 || this.euristica == 2) {
-            val esec = QueryExecutor(intornoTripla, emptyList(), this.euristica)
+            val esec = QueryExecutorWikidata(intornoTripla, emptyList(), this.euristica)
             pesoSupporto = esec.queryProssimita(intornoTripla).toDouble()
             if (pesoSupporto > CommonData.proximityLimit.toDouble()) {
                 pesoSupporto = CommonData.proximityLimit.toDouble()

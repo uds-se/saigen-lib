@@ -5,11 +5,12 @@ import formsolver.FormSolver
 import org.apache.jena.query.Query
 
 class LinkProvider @JvmOverloads constructor(
-    private val provider: String = "dbpedia", // "dbpedia", "wikidata"
+    private val provider: String, // = "dbpedia", // "dbpedia", "wikidata"
     /**
      * Maximum number of entries which should be queried by link
      */
     private val maxEntries: Int = 100,
+    private val testWTF: Int = 100,
     /**
      * Threshold for a predicate association (Link)
      */
@@ -35,7 +36,6 @@ class LinkProvider @JvmOverloads constructor(
         CommonData.queryToValuesMap.clear()
 
         runLink(labels)
-
         return fetchResults()
     }
 

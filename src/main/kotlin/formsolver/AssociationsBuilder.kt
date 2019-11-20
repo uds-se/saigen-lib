@@ -27,12 +27,11 @@ internal class AssociationsBuilder(
     private var useSynPred: Boolean = false
     private var useSynCl: Boolean = false
 
-
     private fun <T> runQuery(queryStr: String, processResult: (ResultSet?) -> T): T {
         try {
             logger.debug("Running query: " + queryStr)
             val query = QueryFactory.create(queryStr)
-            QueryExecutionFactory.sparqlService(FormSolver.wikiDataEndpoint, query).use { qExec ->
+            QueryExecutionFactory.sparqlService(FormSolver.endpoint, query).use { qExec ->
                 val queryResult: ResultSet? = try {
                     ++this.nQuery
                     qExec.execSelect()
@@ -49,7 +48,7 @@ internal class AssociationsBuilder(
         }
     }
 
-    private fun classAssociations(namespace2: String, tag: String, threshold: Int): String {
+    private fun predicateAssociation(namespace2: String, tag: String, threshold: Int): String {
         var chosenTag: String
         var chosenTagSupport = "0"
         val synonyms = NLP.getSynonyms(tag)
@@ -57,18 +56,52 @@ internal class AssociationsBuilder(
         var x = 0
         while (x < synonyms.size) {
             val queryTag = Utility.initialToLowerCase(synonyms[x])
-            val queryString = CommonData.wikidataPrefix + "SELECT DISTINCT ?final WHERE { ?s ?label \"" + queryTag + "\"@en ." + "?item wdt:P31 ?s ." + "?item rdfs:label ?final ." + "FILTER(LANG(?final) = \"en\") } LIMIT 1"
+            val queryString =
+                CommonData.prefix + "SELECT * WHERE { ?node1 " + namespace2 + queryTag + " " + "?node2 . }" + "LIMIT 1" // 1000" Nataniel
 
             val quantity = runQuery(queryString) { result ->
                 if (result?.hasNext() == true) {
-                    val quantity = this.getQuantity(namespace2, queryTag, false)
+                    val quantity = this.getQuantity(namespace2, queryTag, true)
                     val sqs = result.next()
-                    val obj = sqs.get("final") // node2")
+                    val obj = sqs.get("node2")
                     this.node = obj
 
-                    logger.debug("found result! " + result)
-
                     quantity
+                } else {
+                    0
+                }
+            }
+
+            if (quantity.toDouble() > chosenTagSupport.toDouble()) {
+                chosenTag = queryTag
+                chosenTagSupport = "$quantity.$x"
+                if (chosenTag.equals(tag, ignoreCase = true) && quantity > threshold) {
+                    logger.debug("There are no synonyms for the label $chosenTag")
+                    this.useSynPred = false
+                    break
+                }
+            }
+
+            ++x
+        }
+
+        return chosenTagSupport
+    }
+
+    private fun classAssociations(namespace2: String, tag: String, threshold: Int): String {
+        var chosenTag: String
+        var chosenTagSupport = "0"
+        val synonyms = NLP.getSynonyms(tag)
+
+        var x = 0
+        while (x < synonyms.size) {
+            val queryTag = Utility.initialToLowerCase(synonyms[x]) // in my experience, if this is lower case, we often get no results. For predicateAssociations, it should be lower case though.
+            val queryString =
+                CommonData.prefix + "SELECT ?$queryTag " + "WHERE { ?$queryTag a " + namespace2 + queryTag.capitalize() + "}" + "LIMIT 1" // 1000" Nataniel
+
+            val quantity = runQuery(queryString) { result ->
+                if (result?.hasNext() == true) {
+                    this.getQuantity(namespace2, queryTag, false)
                 } else {
                     0
                 }
@@ -86,16 +119,16 @@ internal class AssociationsBuilder(
 
             ++x
         }
-
         return chosenTagSupport
     }
 
     private fun createClassAssociation(namespace2: String, tag: String, quantity: Int) {
         var internalTag = tag
-        // internalTag = Utility.initialLetterUpperCase(internalTag)
+        internalTag = Utility.initialLetterUpperCase(internalTag)
         val tri = Triple(
-            NodeFactory.createURI("$internalTag"),// ?subject_$internalTag"),
-            NodeFactory.createURI("a"), NodeFactory.createURI(namespace2 + internalTag)
+            NodeFactory.createURI("?subject_$internalTag"),
+            NodeFactory.createURI("a"),
+            NodeFactory.createURI(namespace2 + internalTag)
         )
         val concept = ElementClass(namespace2, internalTag, quantity)
         this.graph.add(tri)
@@ -103,18 +136,35 @@ internal class AssociationsBuilder(
         ++this.nAssociatedTags
     }
 
+    private fun createPredicateAssociation(namespace2: String, tag: String, quantity: Int) {
+        var internalTag = tag
+        internalTag = Utility.initialToLowerCase(internalTag)
+        val subjectP = ElementClass("", "?subject_$internalTag")
+        val objectP = ElementClass("", "?object_$internalTag")
+        val predicate = Predicate(namespace2, internalTag, !this.node!!.isLiteral)
+        this.elements.add(predicate)
+        this.elementsLv2.add(subjectP)
+        val tri = Triple(
+            NodeFactory.createURI("?subject_$internalTag"),
+            NodeFactory.createURI(namespace2 + internalTag), NodeFactory.createURI("?object_$internalTag")
+        )
+        if (!this.node!!.isLiteral) {
+            this.elementsLv2.add(objectP)
+        }
+        this.graph.add(tri)
+        predicate.quantity = quantity
+        ++this.nAssociatedTags
+    }
+
     private fun getQuantity(namespace2: String, tag: String, predicate: Boolean): Int {
-        // val triple = if (predicate) "?node1 $namespace2$tag ?node2 ." else "?$tag a $namespace2${tag.capitalize()}"
-        // val triple = "?s ?label \"" + tag + "\"@en ." + "?item wdt:P31 ?s ." + "SERVICE wikibase:label { bd:serviceParam wikibase:language \"en\" . }"
-        val triple = "?s ?label \"" + tag + "\"@en ." + "?item wdt:P31 ?s ." + "?item rdfs:label ?final ." + "FILTER(LANG(?final) = \"en\")"
+        val triple = if (predicate) "?node1 $namespace2$tag ?node2 ." else "?$tag a $namespace2${tag.capitalize()}"
 
         val cachedResult = namespaceTagCache[triple]
         if (cachedResult != null) {
             return cachedResult
         }
 
-        // val queryString = CommonData.prefix + "SELECT (COUNT(*) as ?count) " + "WHERE {" + triple + "}"
-        val queryString = CommonData.wikidataPrefix + "SELECT (COUNT(*) as ?count) " + "WHERE {" + triple + "}"
+        val queryString = CommonData.prefix + "SELECT (COUNT(*) as ?count) " + "WHERE {" + triple + "}"
 
         val quantity = runQuery(queryString) { result ->
             if (result?.hasNext() == true) {
@@ -138,12 +188,18 @@ internal class AssociationsBuilder(
             while (i < this.tags.size) {
                 val synonym: Int
                 val resultClassNamespace: MutableList<String> = mutableListOf()
+                val resultPredicateNamespace: MutableList<String> = mutableListOf()
                 var maxClass = 0.0
                 var chosenClass = ""
                 var maxClassIndex = 0
+                var maxPredicate = 0.0
+                var chosenPredicate = ""
+                var maxPredicateIndex = 0
                 var j = 0
 
                 while (j < this.namespace.size) {
+                    this.useSynPred = true
+                    resultPredicateNamespace.add(this.predicateAssociation(this.namespace[j], this.tags[i], threshold))
                     this.useSynCl = true
                     resultClassNamespace.add(this.classAssociations(this.namespace[j], this.tags[i], threshold))
 
@@ -153,18 +209,39 @@ internal class AssociationsBuilder(
                         maxClassIndex = j
                     }
 
-                    if ((j == 0 || j == 1) && maxClass >= threshold.toDouble()) break
+                    if (resultPredicateNamespace[j].toDouble() > maxPredicate) {
+                        maxPredicate = resultPredicateNamespace[j].toDouble()
+                        chosenPredicate = resultPredicateNamespace[j]
+                        maxPredicateIndex = j
+                    }
+
+                    if ((j == 0 || j == 1) && maxPredicate >= threshold.toDouble() || maxClass >= threshold.toDouble()) break
                     ++j
                 }
 
-                if (maxClass >= threshold.toDouble()) {
-                synonym =
-                    Integer.parseInt(chosenClass.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[1])
-                try {
-                    this.tags[i] = NLP.getSynonyms(this.tags[i]).toTypedArray()[synonym]
-                } catch (e3: IOException) {
-                    e3.printStackTrace()
-                }
+                if ((!this.useSynPred || this.useSynCl) && maxPredicate >= threshold.toDouble()) {
+                    synonym =
+                        Integer.parseInt(chosenPredicate.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[1])
+                    try {
+                        this.tags[i] = NLP.getSynonyms(this.tags[i]).toTypedArray()[synonym]
+                    } catch (e2: IOException) {
+                        e2.printStackTrace()
+                    }
+
+                    logger.debug("Predicate creation for " + this.tags[i])
+                    this.createPredicateAssociation(
+                        this.namespace[maxPredicateIndex],
+                        this.tags[i],
+                        maxPredicate.toInt()
+                    )
+                } else if (maxClass >= threshold.toDouble()) {
+                    synonym =
+                        Integer.parseInt(chosenClass.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[1])
+                    try {
+                        this.tags[i] = NLP.getSynonyms(this.tags[i]).toTypedArray()[synonym]
+                    } catch (e3: IOException) {
+                        e3.printStackTrace()
+                    }
 
                     logger.debug("Class creation for " + this.tags[i])
                     this.createClassAssociation(this.namespace[maxClassIndex], this.tags[i], maxClass.toInt())

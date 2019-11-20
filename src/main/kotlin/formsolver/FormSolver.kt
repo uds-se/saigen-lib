@@ -7,7 +7,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class FormSolver(
-    private val provider:String = "dbpedia",
+    private val provider: String = "dbpedia",
     private val tags: Array<String>,
     private val useThreshold: Boolean,
     private val associationThreshold: Int,
@@ -28,12 +28,21 @@ class FormSolver(
         val start = System.currentTimeMillis()
         evaluator.setStartTime(start)
 
-        val genAss = AssociationsBuilder(this.graph, this.tags, this.namespaces, this.useThreshold)
-        this.graph = genAss.buildAssociations(this.associationThreshold)
-        evaluator.addNQuery(genAss.nQuery)
-        evaluator.setNAssociatedTags(genAss.nAssociatedTags)
-        this.elements = genAss.elements
-        this.elementsLv2 = genAss.elementsLv2
+        if (provider == "wikidata") {
+            val genAss = AssociationsBuilderWikidata(this.graph, this.tags, this.namespaces, this.useThreshold)
+            this.graph = genAss.buildAssociations(this.associationThreshold) // 1 to make it work if only 1 result is returned
+            evaluator.addNQuery(genAss.nQuery)
+            evaluator.setNAssociatedTags(genAss.nAssociatedTags)
+            this.elements = genAss.elements
+            this.elementsLv2 = genAss.elementsLv2
+        } else {
+            val genAss = AssociationsBuilder(this.graph, this.tags, this.namespaces, this.useThreshold)
+            this.graph = genAss.buildAssociations(this.associationThreshold)
+            evaluator.addNQuery(genAss.nQuery)
+            evaluator.setNAssociatedTags(genAss.nAssociatedTags)
+            this.elements = genAss.elements
+            this.elementsLv2 = genAss.elementsLv2
+        }
 
         val step2 = System.currentTimeMillis()
         evaluator.setEndTimeStep1(step2)
@@ -51,10 +60,17 @@ class FormSolver(
             logger.debug("Generation of associations is over")
         }
 
-        val queryExecutor = QueryExecutor(this.graph, this.elements, this.heuristic)
-        queryExecutor.runFinalQuery(maxEntries)
-        evaluator.setObtainedResult(queryExecutor.numResults)
-        evaluator.numComponents = queryExecutor.numComponents
+        if (provider == "wikidata") {
+            val queryExecutor = QueryExecutorWikidata(this.graph, this.elements, this.heuristic)
+            queryExecutor.runFinalQuery(maxEntries)
+            evaluator.setObtainedResult(queryExecutor.numResults)
+            evaluator.numComponents = queryExecutor.numComponents
+        } else {
+            val queryExecutor = QueryExecutor(this.graph, this.elements, this.heuristic)
+            queryExecutor.runFinalQuery(maxEntries)
+            evaluator.setObtainedResult(queryExecutor.numResults)
+            evaluator.numComponents = queryExecutor.numComponents
+        }
 
         /*val step4 = System.currentTimeMillis()
         evaluator.setEndTime(step4)

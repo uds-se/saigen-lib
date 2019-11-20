@@ -11,7 +11,7 @@ import org.apache.jena.query.ResultSetFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class QueryExecutor internal constructor(
+class QueryExecutorWikidata internal constructor(
     private var graph: Graph,
     private var elements: List<Element>,
     private var heuristic: Int
@@ -38,24 +38,22 @@ class QueryExecutor internal constructor(
             val tmp_g = GraphMinimization.minimize(g)
             ++this.numComponents
             obtainedResults[i] = 0
-            var variability = this.costruisciStringaVarSelect(tmp_g)
-            if (variability == "") {
-                variability = "*"
-            }
-            var queryString = CommonData.prefix + "SELECT DISTINCT " + variability + "\n" + "WHERE { \n"
+            // var variability = this.costruisciStringaVarSelect(tmp_g)
+            // if (variability == "") {
+            //     variability = "*"
+            // }
+            var queryString = ""
             val ite = tmp_g.find(Triple.ANY)
             while (ite.hasNext()) {
                 val tri = ite.next()
-                queryString =
-                    queryString + tri.subject.toString() + " " + tri.predicate + " " + tri.`object`.toString() + " . \n"
+                queryString = CommonData.wikidataPrefix + "SELECT DISTINCT (?final AS ?" + tri.subject.toString() + ") WHERE { ?s ?label \"" + tri.subject.toString() + "\"@en ." + "?item wdt:P31 ?s ." + "?item rdfs:label ?final ." + "FILTER(LANG(?final) = \"en\") } LIMIT $maxEntries"
             }
-            queryString = "$queryString} LIMIT $maxEntries" // "500"
 
             logger.debug("Query:")
             logger.debug(queryString)
             CommonData.outputQueries.add(queryString)
             val query2 = QueryFactory.create(queryString)
-            val qExec = QueryExecutionFactory.sparqlService(FormSolver.endpoint, query2)
+            val qExec = QueryExecutionFactory.sparqlService(FormSolver.wikiDataEndpoint, query2)
             var rs: ResultSet? = null
             try {
                 rs = qExec.execSelect()
@@ -84,6 +82,7 @@ class QueryExecutor internal constructor(
             qExec.close()
 
             logger.debug("Number of query results: " + obtainedResults[++i - 1])
+            /*
             if (obtainedResults[i - 1] < CommonData.modelLimit) {
                 if (obtainedResults[i - 1] > 0) {
                     logger.debug("Valid model  the support is " + obtainedResults[i - 1])
@@ -92,6 +91,8 @@ class QueryExecutor internal constructor(
                 this.resolveGraph(g, maxEntries) // recursive call
                 continue
             }
+            */
+
             this.validForest.add(tmp_g)
         }
         this.numResults.addAll(obtainedResults.toList())
@@ -107,37 +108,6 @@ class QueryExecutor internal constructor(
         this.runFinalQuery(maxEntries)
         return this.cutLabels
     }
-
-    /*fun eseguiSingolaQuery(g: Graph): Int {
-        try {
-            val variabili = this.costruisciStringaVarSelect(g)
-            var queryString = CommonData.prefix.toString() + "SELECT " + variabili + "\n" + "WHERE { \n"
-            val ite = g.find(Triple.ANY)
-            while (ite.hasNext()) {
-                val tri = ite.next()
-                queryString = queryString + tri.subject.toString() + " " + tri.predicate + " " + tri.`object`.toString() + " . \n"
-            }
-            queryString = "$queryString} LIMIT 200"
-            val query2 = QueryFactory.create(queryString)
-            val qexec = QueryExecutionFactory.sparqlService(FormSolver.endpoint, query2)
-            var rs: ResultSet? = null
-            try {
-                rs = qexec.execSelect()
-            } catch (exception: Exception) {
-                // empty catch block
-            }
-
-            var numRes = 0
-            while (rs != null && rs.hasNext()) {
-                rs.next()
-                ++numRes
-            }
-            qexec.close()
-            return numRes
-        } catch (variabili: Exception) {
-            return 0
-        }
-    }*/
 
     private fun costruisciStringaVarSelect(gr: Graph): String {
         var variabiliSelect = ""
@@ -173,7 +143,7 @@ class QueryExecutor internal constructor(
                     if (tri.`object`.uri[0] == '?') variabili + tri.`object`.uri + " " else variabili + tri.subject.uri + " "
             }
             variabili = "(COUNT(*) AS ?count)"
-            queryString = CommonData.prefix + "SELECT DISTINCT " + variabili + "WHERE { \n"
+            queryString = CommonData.wikidataPrefix + "SELECT DISTINCT " + variabili + "WHERE { \n"
             ite = g.find(Triple.ANY)
             while (ite.hasNext()) {
                 tri = ite.next()
@@ -182,7 +152,7 @@ class QueryExecutor internal constructor(
             }
             queryString += "} LIMIT ${CommonData.proximityLimit}"
             val query2 = QueryFactory.create(queryString)
-            val qexec = QueryExecutionFactory.sparqlService(FormSolver.endpoint, query2)
+            val qexec = QueryExecutionFactory.sparqlService(FormSolver.wikiDataEndpoint, query2)
             var rs: ResultSet? = null
             try {
                 rs = qexec.execSelect()
