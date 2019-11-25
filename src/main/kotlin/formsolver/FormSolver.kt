@@ -36,12 +36,21 @@ class FormSolver(
             this.elements = genAss.elements
             this.elementsLv2 = genAss.elementsLv2
         } else {
-            val genAss = AssociationsBuilder(this.graph, this.tags, this.namespaces, this.useThreshold)
-            this.graph = genAss.buildAssociations(this.associationThreshold)
-            evaluator.addNQuery(genAss.nQuery)
-            evaluator.setNAssociatedTags(genAss.nAssociatedTags)
-            this.elements = genAss.elements
-            this.elementsLv2 = genAss.elementsLv2
+            if (provider == "yago") {
+                val genAss = AssociationsBuilderYago(this.graph, this.tags, this.namespaces, this.useThreshold)
+                this.graph = genAss.buildAssociations(this.associationThreshold) // 1 to make it work if only 1 result is returned
+                evaluator.addNQuery(genAss.nQuery)
+                evaluator.setNAssociatedTags(genAss.nAssociatedTags)
+                this.elements = genAss.elements
+                this.elementsLv2 = genAss.elementsLv2
+            } else { // dbpedia
+                val genAss = AssociationsBuilder(this.graph, this.tags, this.namespaces, this.useThreshold)
+                this.graph = genAss.buildAssociations(this.associationThreshold)
+                evaluator.addNQuery(genAss.nQuery)
+                evaluator.setNAssociatedTags(genAss.nAssociatedTags)
+                this.elements = genAss.elements
+                this.elementsLv2 = genAss.elementsLv2
+            }
         }
 
         val step2 = System.currentTimeMillis()
@@ -49,7 +58,7 @@ class FormSolver(
         logger.debug("Generation of associations is over")
 
         // The commented code below matches input fields semantically in activities. So if we have a "city" and a "car" input, it will try to find a city that is somewhat related to a car and get very few, clumsy results. In my test subject, it works better to query separately.
-        if (provider == "dbpedia") { // not implemented for wikidata yet
+        if (provider == "dbpedia") { // not implemented for wikidata, yago yet
             val genRel = RelationshipGenerator(this.graph, this.elements, this.elementsLv2)
             genRel.analyseCorrelations()
             evaluator.addNQuery(genRel.nQuery)
@@ -66,10 +75,18 @@ class FormSolver(
             evaluator.setObtainedResult(queryExecutor.numResults)
             evaluator.numComponents = queryExecutor.numComponents
         } else {
-            val queryExecutor = QueryExecutor(this.graph, this.elements, this.heuristic)
-            queryExecutor.runFinalQuery(maxEntries)
-            evaluator.setObtainedResult(queryExecutor.numResults)
-            evaluator.numComponents = queryExecutor.numComponents
+            if (provider == "yago") {
+                val queryExecutor = QueryExecutorYago(this.graph, this.elements, this.heuristic)
+                queryExecutor.runFinalQuery(maxEntries)
+                evaluator.setObtainedResult(queryExecutor.numResults)
+                evaluator.numComponents = queryExecutor.numComponents
+            }
+            else {
+                val queryExecutor = QueryExecutor(this.graph, this.elements, this.heuristic)
+                queryExecutor.runFinalQuery(maxEntries)
+                evaluator.setObtainedResult(queryExecutor.numResults)
+                evaluator.numComponents = queryExecutor.numComponents
+            }
         }
 
         /*val step4 = System.currentTimeMillis()
@@ -151,5 +168,6 @@ class FormSolver(
         @JvmStatic
         var endpoint = "http://dbpedia.org/sparql/"
         var wikiDataEndpoint = "https://query.wikidata.org/sparql"
+        var yagoEndpoint = "https://linkeddata1.calcul.u-psud.fr/sparql"
     }
 }

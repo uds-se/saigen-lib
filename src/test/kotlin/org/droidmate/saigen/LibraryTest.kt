@@ -19,7 +19,7 @@ class LibraryTest {
     @Test
     fun getInputsForLabelsTest() {
         // for "teller", wikidata only finds one result, which gets scrapped because of threshold. Then, dbpedia is queried which finds a result.
-        val testLabels = listOf("teller") // "drink"
+        val testLabels = listOf("actor") // "toy", "cocktail", "teller", "car", "drink"
         val queryResults = getInputsForLabels(testLabels)
         print(queryResults)
         assert(queryResults.size > 0)

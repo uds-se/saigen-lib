@@ -5,7 +5,7 @@ import formsolver.FormSolver
 import org.apache.jena.query.Query
 
 class LinkProvider @JvmOverloads constructor(
-    private val provider: String, // = "dbpedia", // "dbpedia", "wikidata"
+    private val provider: String, // = "dbpedia", // "dbpedia", "wikidata", "yago"
     /**
      * Maximum number of entries which should be queried by link
      */
