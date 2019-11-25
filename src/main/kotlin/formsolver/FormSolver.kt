@@ -80,8 +80,7 @@ class FormSolver(
                 queryExecutor.runFinalQuery(maxEntries)
                 evaluator.setObtainedResult(queryExecutor.numResults)
                 evaluator.numComponents = queryExecutor.numComponents
-            }
-            else {
+            } else {
                 val queryExecutor = QueryExecutor(this.graph, this.elements, this.heuristic)
                 queryExecutor.runFinalQuery(maxEntries)
                 evaluator.setObtainedResult(queryExecutor.numResults)

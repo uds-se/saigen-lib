@@ -37,10 +37,9 @@ class Lib {
                         "url" to listOf("http://google.com")
                     )
                 ),
-                    // LinkProvider("wikidata"),
+                    LinkProvider("dbpedia"),
+                    LinkProvider("wikidata"),
                     LinkProvider("yago")
-
-                // LinkProvider("dbpedia") // ,
             )
         )
 
